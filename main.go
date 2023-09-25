@@ -13,6 +13,7 @@ import (
 
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/beego/beego/v2/server/web/context"
+	"github.com/beego/beego/v2/server/web/filter/cors"
 )
 
 //	@title			XOJ 项目
@@ -80,5 +81,13 @@ func main() {
 			ctx.Output.JSON(response, false, false)
 		}
 	}
+
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"PUT", "PATCH", "GET", "OPTIONS"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 	beego.Run()
 }
