@@ -72,8 +72,8 @@ func (this UserController) GetUserInfoByUserAccount() {
 	store.TokenMemoryStore[newToken] = true
 
 	// 将新的 token 返回给前端
-	// domain, _ := utils.GetDomainFromReferer(c.Request.Referer())
-	this.Ctx.SetCookie("token", newToken, 3600, "/", this.Ctx.Request.Referer(), false, true)
+	domain, _ := utils.GetDomainFromReferer(this.Ctx.Request.Referer())
+	this.Ctx.SetCookie("token", newToken, 3600, "/", domain, false, true)
 
 	useraccount := claims["user_account"]
 	// if useraccount == "" {
@@ -172,8 +172,10 @@ func (this UserController) Login() {
 	store.TokenMemoryStore[token] = true
 
 	// 返回token到前端
-	domain := this.Ctx.Request.Referer()
-	// domain, _ := utils.GetDomainFromReferer(c.Request.Referer())
+	referer := this.Ctx.Request.Referer()
+	mylog.Log.Info("refer=", referer) //http://localhost:8080/
+	domain, _ := utils.GetDomainFromReferer(referer)
+	mylog.Log.Info("domain=", domain) //localhost
 	this.Ctx.SetCookie("token", token, 3600, "/", domain, false, true)
 
 	myresq.Success(this.Ctx, models.ConvertToNormalUser(userInfo))

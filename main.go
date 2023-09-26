@@ -28,7 +28,7 @@ import (
 //	@license.name	license.name
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host	localhost:8091
+//	@host	localhost:8091
 func main() {
 	var err error
 
