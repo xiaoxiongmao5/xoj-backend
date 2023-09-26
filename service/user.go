@@ -64,9 +64,18 @@ func CreateUser(param *models.UserRegisterParams) (sql.Result, error) {
 		return nil, err
 	}
 
+	// 将 userAccount 转换为 sql.NullString
+	var userName sql.NullString
+	if userAccount != "" {
+		userName = sql.NullString{String: userAccount, Valid: true}
+	} else {
+		userName = sql.NullString{String: "", Valid: false}
+	}
+
 	params := &dbsq.CreateUserParams{
 		Useraccount:  userAccount,
 		Userpassword: hashPassword,
+		Username:     userName,
 	}
 	conn, err := mydb.GetConn()
 	if err != nil {

@@ -15,9 +15,9 @@ OFFSET ?;
 
 -- name: CreateUser :execresult
 insert into `user` (
-    `userAccount`, `userPassword`
+    `userAccount`, `userPassword`, `userName`
     ) values (
-        ?, ?
+        ?, ?, ?
     );
 
 -- name: DeleteUser :exec

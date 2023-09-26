@@ -38,7 +38,7 @@ func SetupLogger() (*logrus.Logger, error) {
 	// 设置日志输出
 	logWriter, err := rotatelogs.New(
 		// 分割后的文件名称
-		config.LogFilePath+"%Y%m%d.log",
+		config.LogFilePath+"_%Y%m%d.log",
 		// 生成软链，指向最新日志文件
 		rotatelogs.WithLinkName(config.LogFilePath),
 		// 设置最大保存时间(7天)
