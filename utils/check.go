@@ -1,3 +1,11 @@
+/*
+ * @Author: 小熊 627516430@qq.com
+ * @Date: 2023-09-26 10:35:03
+ * @LastEditors: 小熊 627516430@qq.com
+ * @LastEditTime: 2023-09-27 17:59:56
+ * @FilePath: /xoj-backend/utils/check.go
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 package utils
 
 import (
@@ -10,7 +18,7 @@ import (
 )
 
 // 检查是否为空字符串
-func AreEmptyStrings(values ...string) bool {
+func IsAnyBlank(values ...string) bool {
 	for _, value := range values {
 		if value == "" {
 			return true
@@ -19,8 +27,16 @@ func AreEmptyStrings(values ...string) bool {
 	return false
 }
 
+// 检查不为空
+func IsNotBlank(value string) bool {
+	if value == "" {
+		return false
+	}
+	return true
+}
+
 // 检查是否一样（使用 == 检查）
-func CheckSame[T string | int](desc string, str1 T, str2 T) bool {
+func CheckSame[T string | int | int8 | int16 | int32 | int64](desc string, str1 T, str2 T) bool {
 	res := false
 	if str1 == str2 {
 		res = true

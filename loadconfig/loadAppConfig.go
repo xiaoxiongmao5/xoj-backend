@@ -19,7 +19,7 @@ var appConfigMutex sync.Mutex
 // dbUser := os.Getenv("DB_USER")
 // dbPassword := os.Getenv("DB_PASSWORD")
 // dbName := os.Getenv("DB_NAME")
-// if !utils.AreEmptyStrings(dbHost, dbPort, dbUser, dbPassword, dbName) {
+// if !utils.IsAnyBlank(dbHost, dbPort, dbUser, dbPassword, dbName) {
 // 	config.AppConfig.Database.Host = dbHost
 // 	config.AppConfig.Database.Port, _ = strconv.Atoi(dbPort)
 // 	config.AppConfig.Database.Dbname = dbName
