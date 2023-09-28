@@ -1,3 +1,4 @@
 log/*
 api.rest
 doc/*
+swagger/*

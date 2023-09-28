@@ -6,11 +6,28 @@ import (
 	"errors"
 	"time"
 
+	"github.com/beego/beego/v2/client/orm"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 )
 
 var DB *sql.DB
+var O orm.Ormer
+
+func init() {
+	mylog.Log.Info("init begin: mydb")
+
+	// 注册数据库驱动
+	orm.RegisterDriver("mysql", orm.DRMySQL)
+
+	// 注册数据库连接
+	orm.RegisterDataBase("default", "mysql", "root:@/xoj?charset=utf8&parseTime=true")
+
+	// 创建一个 Orm 实例对象，用于执行数据库操作。 NewOrm 的同时会执行 orm.BootStrap (整个 app 只执行一次)，用以验证模型之间的定义并缓存。（大多数情况下，应该尽量复用Orm 实例，因为本身Orm实例被设计为无状态的，一个数据库对应一个Orm实例）（ps: 但是在使用事务的时候，我们会返回TxOrm的实例，它本身是有状态的，一个事务对应一个TxOrm实例。在使用TxOrm时候，任何衍生查询都是在该事务内。）
+	O = orm.NewOrm()
+
+	mylog.Log.Info("init end  : mydb")
+}
 
 // 创建数据库连接池
 func ConnectionPool(savePath string, maxOpenConns int) (*sql.DB, error) {

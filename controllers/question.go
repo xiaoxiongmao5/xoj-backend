@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-27 20:53:40
+ * @LastEditTime: 2023-09-28 23:30:31
  * @FilePath: /xoj-backend/controllers/question/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -15,6 +15,8 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/common"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/question"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
 	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionService"
 	userservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/userService"
@@ -244,25 +246,91 @@ func (this QuestionController) GetQuestionVOById() {
 		return
 	}
 
-	tmp := entity.DbConvertQuestion(questionInfo)
+	questionObj := entity.DbConvertQuestion(questionInfo)
 	// 脱敏
-	respdata := questionservice.GetQuestionVO(tmp)
+	respdata := questionservice.GetQuestionVO(this.Ctx, questionObj)
 	myresq.Success(this.Ctx, respdata)
 }
 
 // 分页获取题目列表（仅管理员）
 //
-//	@router				/list/page [post]
+//	@router				/question/list/page [post]
 //	@AuthCheck(mustRole	= UserConstant.ADMIN_ROLE)
 func (this QuestionController) ListQuestionByPage() {
+	var params question.QuestionQueryRequest
+	if err := this.BindJSON(&params); err != nil {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
 
+	// 限制爬虫
+	if params.PageSize > 20 {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "超过分页大小限制")
+		return
+	}
+
+	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
+	qs := mydb.O.QueryTable("question")
+
+	// 构建查询条件
+	qs = questionservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = questionservice.GetQuerySeter(qs, params)
+
+	// 执行查询
+	var questionPage []*entity.Question
+
+	num, err := qs.All(&questionPage)
+	if err != nil {
+		mylog.Log.Errorf("ListQuestionByPage qs.All error: %v", err.Error())
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
+	respdata := map[string]interface{}{
+		"data":  questionPage,
+		"total": num,
+	}
+	myresq.Success(this.Ctx, respdata)
 }
 
-// 分页获取列表（封装类）
+// 分页获取题目列表（封装类）
 //
 //	@router	/list/page/vo [post]
 func (this QuestionController) ListQuestionVOByPage() {
+	var params question.QuestionQueryRequest
+	if err := this.BindJSON(&params); err != nil {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
 
+	// 限制爬虫
+	if params.PageSize > 20 {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "超过分页大小限制")
+		return
+	}
+
+	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
+	qs := mydb.O.QueryTable("question")
+
+	// 构建查询条件
+	qs = questionservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = questionservice.GetQuerySeter(qs, params)
+
+	// 执行查询
+	var questionPage []*entity.Question
+
+	num, err := qs.All(&questionPage)
+	if err != nil {
+		mylog.Log.Errorf("ListQuestionByPage qs.All error: %v", err.Error())
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
+	respdata := map[string]interface{}{
+		"data":  questionservice.GetQuestionVOPage(this.Ctx, questionPage),
+		"total": num,
+	}
+	myresq.Success(this.Ctx, respdata)
 }
 
 // 分页获取当前用户创建的资源列表

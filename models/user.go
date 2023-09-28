@@ -1,3 +1,11 @@
+/*
+ * @Author: 小熊 627516430@qq.com
+ * @Date: 2023-09-26 10:35:03
+ * @LastEditors: 小熊 627516430@qq.com
+ * @LastEditTime: 2023-09-27 11:22:02
+ * @FilePath: /xoj-backend/models/user.go
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 package models
 
 import (
@@ -24,18 +32,6 @@ type ShowUserJSON struct {
 	Createtime time.Time `json:"createtime"`
 	// 更新时间
 	Updatetime time.Time `json:"updatetime"`
-}
-
-// 注册用户
-type UserRegisterParams struct {
-	UserAccount       string `json:"useraccount"`
-	UserPassword      string `json:"userpassword"`
-	CheckUserPassword string `json:"checkUserpassword"`
-}
-
-type UserLoginParams struct {
-	Useraccount  string `json:"useraccount" form:"useraccount"`
-	Userpassword string `json:"userpassword" form:"userpassword"`
 }
 
 func ConvertToNormalUser(u *dbsq.User) *ShowUserJSON {

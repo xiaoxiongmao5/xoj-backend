@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 10:35:03
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-27 17:59:56
+ * @LastEditTime: 2023-09-28 23:12:43
  * @FilePath: /xoj-backend/utils/check.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -18,9 +18,9 @@ import (
 )
 
 // 检查是否为空字符串
-func IsAnyBlank(values ...string) bool {
+func IsAnyBlank(values ...interface{}) bool {
 	for _, value := range values {
-		if value == "" {
+		if IsEmpty(value) {
 			return true
 		}
 	}
@@ -28,11 +28,29 @@ func IsAnyBlank(values ...string) bool {
 }
 
 // 检查不为空
-func IsNotBlank(value string) bool {
-	if value == "" {
-		return false
+func IsNotBlank(value interface{}) bool {
+	return !IsEmpty(value)
+}
+
+// 检查为空
+func IsEmpty(value interface{}) bool {
+	if value == nil {
+		return true
 	}
-	return true
+
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.String:
+		return v.Len() == 0
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Slice, reflect.Array:
+		return v.Len() == 0
+	case reflect.Map, reflect.Ptr, reflect.Interface:
+		return v.IsNil()
+	}
+
+	return false
 }
 
 // 检查是否一样（使用 == 检查）

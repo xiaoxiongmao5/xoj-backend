@@ -1,3 +1,10 @@
+/*
+ * @Author: 小熊 627516430@qq.com
+ * @Date: 2023-09-27 14:46:54
+ * @LastEditors: 小熊 627516430@qq.com
+ * @LastEditTime: 2023-09-28 23:25:09
+ * @FilePath: /xoj-backend/main.go
+ */
 package main
 
 import (
@@ -16,6 +23,22 @@ import (
 	"github.com/beego/beego/v2/server/web/filter/cors"
 )
 
+func init() {
+	mylog.Log.Info("init begin: main")
+
+	var err error
+	// 加载App配置数据
+	if config.AppConfig, err = loadconfig.LoadAppConfig(); err != nil {
+		panic(err)
+	}
+	// 加载APP动态配置数据
+	if config.AppConfigDynamic, err = loadconfig.LoadAppConfigDynamic(); err != nil {
+		panic(err)
+	}
+
+	mylog.Log.Info("init end  : main")
+}
+
 //	@title			XOJ 项目
 //	@version		1.0
 //	@description	在线判题系统
@@ -28,24 +51,26 @@ import (
 //	@license.name	license.name
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host	localhost:8091
+// @host	localhost:8091
 func main() {
 	var err error
 
-	// 实例化日志对象
-	if mylog.Log, err = mylog.SetupLogger(); err != nil {
-		panic(err)
-	}
+	// // 实例化日志对象
+	// if mylog.Log, err = mylog.SetupLogger(); err != nil {
+	// 	panic(err)
+	// }
 	defer mylog.Log.Writer().Close()
 
-	// 加载App配置数据
-	if config.AppConfig, err = loadconfig.LoadAppConfig(); err != nil {
-		panic(err)
-	}
-	// 加载APP动态配置数据
-	if config.AppConfigDynamic, err = loadconfig.LoadAppConfigDynamic(); err != nil {
-		panic(err)
-	}
+	// // 加载App配置数据
+	// if config.AppConfig, err = loadconfig.LoadAppConfig(); err != nil {
+	// 	panic(err)
+	// }
+	// // 加载APP动态配置数据
+	// if config.AppConfigDynamic, err = loadconfig.LoadAppConfigDynamic(); err != nil {
+	// 	panic(err)
+	// }
+	// 启动配置文件加载协程
+	go loadconfig.LoadAppDynamicConfigCycle()
 
 	// 初始化数据库连接池
 	if mydb.DB, err = mydb.ConnectionPool(config.AppConfig.Database.SavePath, config.AppConfig.Database.MaxOpenConns); err != nil {
@@ -53,8 +78,15 @@ func main() {
 	}
 	defer mydb.DB.Close()
 
-	// 启动配置文件加载协程
-	go loadconfig.LoadAppDynamicConfigCycle()
+	// // 注册数据库驱动
+	// orm.RegisterDriver("mysql", orm.DRMySQL)
+
+	// // 注册数据库连接
+	// orm.RegisterDataBase("default", "mysql", config.AppConfig.Database.SavePath)
+
+	// // 显示注册默认值的Filter
+	// builder := bean.NewDefaultValueFilterChainBuilder(nil, true, true)
+	// orm.AddGlobalFilterChain(builder.FilterChain)
 
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
@@ -66,9 +98,13 @@ func main() {
 		beego.BConfig.Listen.AdminAddr = "localhost"
 		beego.BConfig.Listen.AdminPort = 8088
 	}
+
+	// 全局异常捕获
 	beego.BConfig.RecoverPanic = true
 	beego.BConfig.RecoverFunc = func(ctx *context.Context, config *beego.Config) {
 		if err := recover(); err != nil {
+			mylog.Log.Errorf("beego.BConfig.RecoverFunc err= %v \n", err)
+
 			// 从 Context 中获取错误码和消息
 			response, ok := ctx.Input.GetData("json").(*myresq.BaseResponse)
 			if !ok {
@@ -82,12 +118,14 @@ func main() {
 		}
 	}
 
+	// 处理跨域
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"PUT", "PATCH", "GET", "OPTIONS"},
-		AllowHeaders:     []string{"Origin"},
+		AllowOrigins:     []string{"http://localhost:8080/", "https://*.jiexiong.com"}, //"*"
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+
 	beego.Run()
 }

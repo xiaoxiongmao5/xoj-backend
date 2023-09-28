@@ -2,7 +2,7 @@
 * @Author: 小熊 627516430@qq.com
 * @Date: 2023-09-27 10:33:52
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-27 21:23:31
+ * @LastEditTime: 2023-09-27 21:39:37
 * @FilePath: /xoj-backend/model/vo/QuestionVO.go
 * @Description: 专门返回给前端用的，可以节约网络传输大小，或者过滤字段（脱敏）、保证安全性。
 */

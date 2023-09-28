@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-27 21:12:23
+ * @LastEditTime: 2023-09-28 17:20:28
  * @FilePath: /xoj-backend/utils/conv.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -48,7 +48,7 @@ func IntSlice2StrSlice(intSlice []int) []string {
 
 /** 前端分页参数转数据库查询的limit和offser
  */
-func CalculateLimitOffset(current, pageSize int) (limit, offset int) {
+func CalculateLimitOffset[T int | int32 | int64](current, pageSize T) (limit, offset T) {
 	if current < 1 {
 		current = 1
 	}
