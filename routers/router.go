@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 10:35:03
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-28 22:37:20
+ * @LastEditTime: 2023-09-29 00:12:34
  * @FilePath: /xoj-backend/routers/router.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -32,6 +32,8 @@ func init() {
 	beego.CtrlPost("/question/edit", controllers.QuestionController.EditQuestion)
 	beego.CtrlGet("/question/get", controllers.QuestionController.GetQuestionById)
 	beego.CtrlGet("/question/get/vo", controllers.QuestionController.GetQuestionVOById)
+	beego.CtrlPost("/question/my/list/page/vo", controllers.QuestionController.ListMyQuestionVOByPage)
+
 	// 需要管理员
 	beego.CtrlPost("/question/update", controllers.QuestionController.UpdateQuestion)
 	beego.CtrlPost("/question/list/page", controllers.QuestionController.ListQuestionByPage)
