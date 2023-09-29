@@ -11,9 +11,9 @@ package user
 // 用户更新个人信息请求
 type UserUpdateMyRequest struct {
 	// 用户昵称
-	Username string `json:"username"`
+	UserName string `json:"userName"`
 	// 用户头像
-	Useravatar string `json:"useravatar"`
+	UserAvatar string `json:"userAvatar"`
 	// 用户简介
-	Userprofile string `json:"userprofile"`
+	UserProfile string `json:"userProfile"`
 }

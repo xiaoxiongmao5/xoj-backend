@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-28 23:25:09
+ * @LastEditTime: 2023-09-29 20:30:47
  * @FilePath: /xoj-backend/main.go
  */
 package main
@@ -78,16 +78,6 @@ func main() {
 	}
 	defer mydb.DB.Close()
 
-	// // 注册数据库驱动
-	// orm.RegisterDriver("mysql", orm.DRMySQL)
-
-	// // 注册数据库连接
-	// orm.RegisterDataBase("default", "mysql", config.AppConfig.Database.SavePath)
-
-	// // 显示注册默认值的Filter
-	// builder := bean.NewDefaultValueFilterChainBuilder(nil, true, true)
-	// orm.AddGlobalFilterChain(builder.FilterChain)
-
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
@@ -126,6 +116,23 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+
+	// // 使用session
+	// // 设置是否开启 Session，默认是 false
+	// beego.BConfig.WebConfig.Session.SessionOn = true
+	// // 设置 Session 过期的时间，默认值是 3600 秒
+	// beego.BConfig.WebConfig.Session.SessionGCMaxLifetime = 3000
+
+	// // 设置 Session 的引擎，默认是 memory，目前支持还有 file、mysql、redis 等
+	// // beego.BConfig.WebConfig.Session.SessionProvider = "redis"
+	// // 设置对应 file、mysql、redis 引擎的保存路径或者链接地址，默认值是空
+	// // beego.BConfig.WebConfig.Session.SessionProviderConfig =
+
+	// // 设置 cookies 的名字，Session 默认是保存在用户的浏览器 cookies 里面的，默认名是 beegosessionID
+	// beego.BConfig.WebConfig.Session.SessionName = "Test"
+
+	// // 设置 cookie 的过期时间，cookie 是用来存储保存在客户端的数据
+	// beego.BConfig.WebConfig.Session.SessionCookieLifeTime = 3600
 
 	beego.Run()
 }

@@ -1,15 +1,11 @@
 package userservice
 
 import (
-	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/beego/beego/v2/client/orm"
-	beecontext "github.com/beego/beego/v2/server/web/context"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/dbsq"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/user"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/enums"
@@ -17,72 +13,126 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/store"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
 )
 
-func UserRegister(useraccount, userpassword, checkUserPassword string) {
+// 用户注册
+func UserRegister(ctx *context.Context, userAccount, userPassword, checkUserPassword string) (num int64) {
+	// 校验
+	if utils.IsAnyBlank(userAccount, userPassword) {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "参数为空")
+		return
+	}
+	if len(userAccount) < 4 || len(userAccount) > 16 {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "用户账号长度不合格要求")
+		return
+	}
+	if len(userPassword) < 6 || len(userPassword) > 16 {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "用户密码长度不合格要求")
+		return
+	}
+	// 密码和校验密码相同
+	if !utils.CheckSame[string]("密码和校验密码相同", userPassword, checkUserPassword) {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "两次输入的密码不一致")
+		return
+	}
 
+	userObj := entity.User{}
+	if err := mydb.O.QueryTable(new(entity.User)).Filter("userAccount", userAccount).One(&userObj); err == nil || err == orm.ErrMultiRows {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "账号重复")
+		return
+	}
+
+	// 加密
+	hashPassword, err := utils.HashPasswordByBcrypt(userPassword)
+	if err != nil {
+		myresq.Abort(ctx, myresq.OPERATION_ERROR, "注册失败，加密错误")
+		return
+	}
+
+	// 插入数据
+	userObj.UserAccount = userAccount
+	userObj.UserPassword = hashPassword
+	userObj.UserName = userAccount
+	num, err = Save(&userObj)
+	if err != nil {
+		myresq.Abort(ctx, myresq.OPERATION_ERROR, "注册失败，数据库错误")
+		return
+	}
+
+	return
 }
 
-func UserLogin(useraccount, userpassword string) {
+// 用户登录
+func UserLogin(ctx *context.Context, userAccount, userPassword string) (loginUserVO vo.LoginUserVO) {
+	// 校验
+	if utils.IsAnyBlank(userAccount, userPassword) {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "参数为空")
+		return
+	}
+	if len(userAccount) < 4 || len(userAccount) > 16 {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "账号错误")
+		return
+	}
+	if len(userPassword) < 6 || len(userPassword) > 16 {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "密码错误")
+		return
+	}
 
+	// 查询用户是否存在
+	userObj := entity.User{}
+	if err := mydb.O.QueryTable(new(entity.User)).Filter("userAccount", userAccount).One(&userObj); err != nil {
+		if err == orm.ErrMultiRows {
+			mylog.Log.Errorf("user 表中存在 userAccount[%s],userPassword[%s] 的多条记录, qs.One err=[%v]", userAccount, userPassword, err.Error())
+			myresq.Abort(ctx, myresq.OPERATION_ERROR, "用户不存在或密码错误")
+			return
+		}
+		if err == orm.ErrNoRows {
+			mylog.Log.Errorf("user login failed, userAccount[%s] cannot match userPassword[%s]", userAccount, userPassword, err.Error())
+			myresq.Abort(ctx, myresq.PARAMS_ERROR, "用户不存在或密码错误")
+			return
+		}
+	}
+
+	// 校验密码是否正确
+	if err := utils.CheckHashPasswordByBcrypt(userObj.UserPassword, userPassword); err != nil {
+		myresq.Abort(ctx, myresq.OPERATION_ERROR, "登录失败")
+		return
+	}
+
+	// 记录用户的登录态
+	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
+	sess.Set(ctx.Request.Context(), "USER_LOGIN_STATE", userObj)
+
+	return GetLoginUserVO(&userObj)
 }
 
+// 用户登录（微信开放平台）
 func UserLoginByMpOpen(wxOAuth2UserInfo interface{}) {
 
 }
 
 // 获取当前登录用户
-//
-//	@param ctx
-//	@return *dbsq.User
-func GetLoginUser(ctx *beecontext.Context) *dbsq.User {
+func GetLoginUser(ctx *context.Context) *entity.User {
 	// 先判断是否已登录
-	// 从请求中获取当前的 Token
-	tokenCookie := ctx.GetCookie("token") //todo USER_LOGIN_STATE
-	if tokenCookie == "" {
+	// SessionStart 根据当前请求返回 session 对象
+	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
+	userObj := sess.Get(ctx.Request.Context(), "USER_LOGIN_STATE")
+	if userObj == nil {
 		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
 		return nil
 	}
-
-	// 验证当前 Token
-	token, err := jwt.Parse(tokenCookie, func(token *jwt.Token) (interface{}, error) {
-		return []byte("SecretKey"), nil
-	})
-	if err != nil || !token.Valid {
+	currentUser, ok := userObj.(entity.User)
+	if !ok || currentUser.ID <= 0 {
 		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
 		return nil
 	}
-	// 从 Token 中获取用户信息
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
-		return nil
-	}
-
-	// 重新生成 Token，并更新有效期
-	userAccount := claims["user_account"].(string)
-	userRole := claims["user_role"].(string)
-	if newToken, err := utils.GenerateToken(userAccount, userRole); err != nil {
-		mylog.Log.Warn("重新生成 Token 以更新有效期失败 err=", err.Error())
-	} else {
-		// 删除旧的 token
-		delete(store.TokenMemoryStore, tokenCookie)
-
-		// 更新内存中的 token 数据
-		store.TokenMemoryStore[newToken] = true
-
-		// 将新的 token 返回给前端
-		domain, _ := utils.GetDomainFromReferer(ctx.Request.Referer())
-		ctx.SetCookie("token", newToken, 3600, "/", domain, false, true)
-	}
-
 	// 从数据库查询（追求性能的话可以注释，直接走缓存）
-	loginUser, err := GetUserInfoByUserAccount(userAccount)
+	loginUser, err := GetById(currentUser.ID)
 	if err != nil {
-		mylog.Log.Errorf("q.GetUserInfoByUserAccount err=%v", err.Error())
-		myresq.Abort(ctx, myresq.USER_NOT_EXIST, "")
+		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
 		return nil
 	}
 	return loginUser
@@ -91,7 +141,7 @@ func GetLoginUser(ctx *beecontext.Context) *dbsq.User {
 // 获取当前登录用户（允许未登录）
 //
 //	@param ctx
-func GetLoginUserPermitNull(ctx *beecontext.Context) {
+func GetLoginUserPermitNull(ctx *context.Context) {
 
 }
 
@@ -99,32 +149,48 @@ func GetLoginUserPermitNull(ctx *beecontext.Context) {
 //
 //	@param user
 //	@return bool
-func IsAdmin(user *dbsq.User) bool {
-	return utils.CheckSame[string]("是否为管理员", user.Userrole, enums.ADMIN.GetValue())
+func IsAdmin(user *entity.User) bool {
+	return utils.CheckSame[string]("是否为管理员", user.UserRole, enums.ADMIN.GetValue())
 }
 
 // 用户注销
-func UserLogout() {
-
+func UserLogout(ctx *context.Context) bool {
+	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
+	userObj := sess.Get(ctx.Request.Context(), "USER_LOGIN_STATE")
+	if userObj == nil {
+		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
+		return true
+	}
+	currentUser, ok := userObj.(entity.User)
+	if !ok || currentUser.ID <= 0 {
+		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "未登录")
+		return true
+	}
+	// 移除登录态
+	err := sess.Delete(ctx.Request.Context(), "USER_LOGIN_STATE")
+	if err != nil {
+		myresq.Abort(ctx, myresq.OPERATION_ERROR, "用户注销失败")
+		return false
+	}
+	return true
 }
 
-// func GetLoginUserVO(userinfo entity.User) vo.LoginUserVO {
+// 获取脱敏的已登录用户信息
+func GetLoginUserVO(userObj *entity.User) vo.LoginUserVO {
+	loginUserVO := vo.LoginUserVO{}
+	utils.CopyStructFields(*userObj, &loginUserVO)
+	return loginUserVO
+}
 
-// }
-
-func GetUserVO(original *entity.User) vo.UserVO {
-	var userVO vo.UserVO
-	utils.CopyStructFields(original, &userVO)
+// 获取脱敏的用户信息
+func GetUserVO(userObj *entity.User) vo.UserVO {
+	userVO := vo.UserVO{}
+	utils.CopyStructFields(*userObj, &userVO)
 	return userVO
 }
 
-func GetUserVO2(original *dbsq.User) vo.UserVO {
-	var userVO vo.UserVO
-	utils.CopyStructFields(original, &userVO)
-	return userVO
-}
-
-// ListUserVO
+// 获取脱敏的用户信息列表
 //
 //	@param list
 //	@return respdata
@@ -138,38 +204,38 @@ func ListUserVO(list []*entity.User) (respdata []vo.UserVO) {
 	return
 }
 
-// GetQuerySeter
+// 获取查询条件
 //
 //	@param qs
 //	@param queryRequest
 //	@return orm.QuerySeter
 func GetQuerySeter(qs orm.QuerySeter, queryRequest user.UserQueryRequest) orm.QuerySeter {
 	id := queryRequest.ID
-	unionid := queryRequest.Unionid
-	mpopenid := queryRequest.Mpopenid
-	username := queryRequest.Username
-	userprofile := queryRequest.Userprofile
-	userrole := queryRequest.Userrole
+	unionId := queryRequest.UnionId
+	mpOpenId := queryRequest.MpOpenId
+	userName := queryRequest.UserName
+	userProfile := queryRequest.UserProfile
+	userRole := queryRequest.UserRole
 	sortField := queryRequest.PageRequest.SortField
 	sortOrder := queryRequest.PageRequest.SortOrder
 
 	if id != 0 {
 		qs = qs.Filter("id", id)
 	}
-	if utils.IsNotBlank(unionid) {
-		qs = qs.Filter("unionId", unionid)
+	if utils.IsNotBlank(unionId) {
+		qs = qs.Filter("unionId", unionId)
 	}
-	if utils.IsNotBlank(mpopenid) {
-		qs = qs.Filter("mpOpenId", mpopenid)
+	if utils.IsNotBlank(mpOpenId) {
+		qs = qs.Filter("mpOpenId", mpOpenId)
 	}
-	if utils.IsNotBlank(userrole) {
-		qs = qs.Filter("userRole", userrole)
+	if utils.IsNotBlank(userRole) {
+		qs = qs.Filter("userRole", userRole)
 	}
-	if utils.IsNotBlank(userprofile) {
-		qs = qs.Filter("userProfile__icontains", userprofile)
+	if utils.IsNotBlank(userProfile) {
+		qs = qs.Filter("userProfile__icontains", userProfile)
 	}
-	if utils.IsNotBlank(username) {
-		qs = qs.Filter("userName__icontains", username)
+	if utils.IsNotBlank(userName) {
+		qs = qs.Filter("userName__icontains", userName)
 	}
 
 	if utils.IsNotBlank(sortField) {
@@ -179,14 +245,10 @@ func GetQuerySeter(qs orm.QuerySeter, queryRequest user.UserQueryRequest) orm.Qu
 		}
 		qs = qs.OrderBy(order)
 	}
+	qs = qs.Filter("isDelete", 0)
 	return qs
 }
 
-// ListByIds
-//
-//	@param ids
-//	@return []*entity.User
-//	@return error
 func ListByIds(ids []int64) ([]*entity.User, error) {
 	qs := mydb.O.QueryTable(new(entity.User))
 	qs = qs.Filter("id__in", ids).Filter("isDelete", 0)
@@ -199,120 +261,51 @@ func ListByIds(ids []int64) ([]*entity.User, error) {
 	return users, nil
 }
 
-// GetById
-//
-//	@param id
-//	@return *entity.User
-//	@return error
 func GetById(id int64) (*entity.User, error) {
-	qs := mydb.O.QueryTable(new(entity.User))
-	var userInfo entity.User
-	err := qs.Filter("id", id).Filter("isDelete", 0).One(&userInfo)
+	var userObj entity.User
+	err := mydb.O.QueryTable(new(entity.User)).Filter("id", id).Filter("isDelete", 0).One(&userObj)
 	if err == orm.ErrMultiRows {
-		mylog.Log.Errorf("user 表中存在 id=[%d] 的多条记录, qs.One err=[%v]", id, err.Error())
+		mylog.Log.Errorf("User 表中存在 id=[%d] 的多条记录, qs.One err=[%v]", id, err.Error())
 		return nil, err
 	}
 	if err == orm.ErrNoRows {
-		mylog.Log.Errorf("user 表没有找到 id=[%d] 的记录, qs.One err=[%v]", id, err.Error())
+		mylog.Log.Errorf("User 表没有找到 id=[%d] 的记录, qs.One err=[%v]", id, err.Error())
 		return nil, err
 	}
-	return &userInfo, nil
+	return &userObj, nil
 }
 
-func GetById2(id int64) (*dbsq.User, error) {
-	conn, err := mydb.GetConn()
+func Save(userObj *entity.User) (int64, error) {
+	num, err := mydb.O.Insert(userObj)
 	if err != nil {
-		return nil, err
+		return -1, err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.GetUserInfoById(ctx, id)
+	return num, nil
 }
 
-// 根据Id 获取用户信息
-func GetUserInfoById(id int64) (*dbsq.User, error) {
-	conn, err := mydb.GetConn()
+func UpdateById(userObj *entity.User) error {
+	num, err := mydb.O.Update(userObj)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.GetUserInfoById(ctx, id)
+	if num == 0 {
+		return errors.New("无更新影响条目")
+	}
+	return nil
 }
 
-// 根据userAccount 获得用户信息
-func GetUserInfoByUserAccount(userAccount string) (*dbsq.User, error) {
-	conn, err := mydb.GetConn()
+func RemoveById(id int64) error {
+	userObj, err := GetById(id)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.GetUserInfoByUniUserAccount(ctx, userAccount)
+	userObj.IsDelete = 1
+	num, err := mydb.O.Update(userObj)
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		return nil
+	}
+	return nil
 }
-
-// 创建账号
-func CreateUser(param *user.UserRegisterRequest) (sql.Result, error) {
-	userAccount, userPassword, checkUserPassword := param.Useraccount, param.Userpassword, param.CheckUserpassword
-	// 检验
-	if utils.IsAnyBlank(userAccount, userPassword, checkUserPassword) {
-		return nil, errors.New("参数为空")
-	}
-	if length := len(userAccount); length < 4 || length > 16 {
-		return nil, errors.New("用户账号长度不符合规定,长度要求4~16位")
-	}
-	if length := len(userPassword); length < 6 || length > 16 {
-		return nil, errors.New("用户密码长度不符合规定,长度要求6~16位")
-	}
-	// 密码和校验密码相同
-	if !utils.CheckSame[string]("校验两次输入的密码一致", userPassword, checkUserPassword) {
-		return nil, errors.New("两次输入的密码不一致")
-	}
-	// 账号不能重复
-	if _, err := GetUserInfoByUserAccount(userAccount); err == nil {
-		return nil, errors.New("账户已存在")
-	}
-	// 将密码进行哈希
-	hashPassword, err := utils.HashPasswordByBcrypt(userPassword)
-	if err != nil {
-		mylog.Log.Errorf("utils.HashByBcrypt err=%v", err.Error())
-		return nil, err
-	}
-
-	// 将 userAccount 转换为 sql.NullString
-	var userName sql.NullString
-	if userAccount != "" {
-		userName = sql.NullString{String: userAccount, Valid: true}
-	} else {
-		userName = sql.NullString{String: "", Valid: false}
-	}
-
-	params := &dbsq.CreateUserParams{
-		Useraccount:  userAccount,
-		Userpassword: hashPassword,
-		Username:     userName,
-	}
-	conn, err := mydb.GetConn()
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.CreateUser(ctx, params)
-}
-
-// // 删除token
-// func DeleteToken(c *gin.Context) {
-// 	// 从cookie拿到token
-// 	tokenCookie, err := c.Cookie("token")
-// 	if err != nil || tokenCookie == "" {
-// 		return
-// 	}
-
-// 	// 从服务端删除该token
-// 	delete(mylog.TokenMemoryStore, tokenCookie)
-// }

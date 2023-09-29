@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 00:10:24
+ * @LastEditTime: 2023-09-29 20:53:22
  * @FilePath: /xoj-backend/controllers/question/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -14,10 +14,12 @@ import (
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/common"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/question"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/questionsubmit"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
+	commonservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/commonService"
 	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionService"
 	userservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/userService"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
@@ -38,39 +40,37 @@ func (this QuestionController) AddQuestion() {
 		return
 	}
 
-	var dbmodel entity.Question
-	if res := utils.CopyStructFields(params, &dbmodel); !res {
+	questionObj := entity.Question{}
+	if res := utils.CopyStructFields(params, &questionObj); !res {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
 	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
-		dbmodel.Tags = string(s)
+		questionObj.Tags = string(s)
 	}
 	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		dbmodel.Judgecase = string(s)
+		questionObj.Judgecase = string(s)
 	}
 	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		dbmodel.Judgeconfig = string(s)
+		questionObj.Judgeconfig = string(s)
 	}
 
 	// 参数校验
-	questionservice.ValidQuestion(this.Ctx, &dbmodel, true)
+	questionservice.ValidQuestion(this.Ctx, &questionObj, true)
 
-	dbparams := question.QuestionAddRequest2DBParams(this.Ctx, &params)
+	loginUser := userservice.GetLoginUser(this.Ctx)
+	questionObj.Userid = loginUser.ID
 
-	// loginUser := userservice.GetLoginUser(this.Ctx)
-	// dbparams.Userid = loginUser.ID
-	dbparams.Userid = 1
-
-	res, err := questionservice.Save(dbparams)
+	id, err := questionservice.Save(&questionObj)
 	if err != nil {
+		mylog.Log.Error("添加题目失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "添加失败")
 		return
 	}
 
-	respdata := make(map[string]int64)
-	respdata["id"], _ = res.LastInsertId()
-	myresq.Success(this.Ctx, respdata)
+	// respdata := make(map[string]int64)
+	// respdata["id"] = id
+	myresq.Success(this.Ctx, id)
 }
 
 // 删除
@@ -83,6 +83,7 @@ func (this QuestionController) DeleteQuestion() {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
+
 	loginUser := userservice.GetLoginUser(this.Ctx)
 
 	// 判断是否存在
@@ -92,12 +93,13 @@ func (this QuestionController) DeleteQuestion() {
 		return
 	}
 	// 仅本人或管理员可删除
-	if utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.Userid, loginUser.ID) || !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
 
 	if err = questionservice.RemoveById(params.ID); err != nil {
+		mylog.Log.Error("删除题目失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "删除失败")
 	}
 
@@ -114,42 +116,40 @@ func (this QuestionController) EditQuestion() {
 		return
 	}
 
-	var dbmodel entity.Question
-	if res := utils.CopyStructFields(params, &dbmodel); !res {
-		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
-		return
-	}
-	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
-		dbmodel.Tags = string(s)
-	}
-	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		dbmodel.Judgecase = string(s)
-	}
-	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		dbmodel.Judgeconfig = string(s)
-	}
-
-	// 参数校验
-	questionservice.ValidQuestion(this.Ctx, &dbmodel, false)
-
-	loginUser := userservice.GetLoginUser(this.Ctx)
-
 	// 判断是否存在
-	questionInfo, err := questionservice.GetById(params.ID)
-	if err != nil || questionInfo.ID <= 0 {
+	questionObj, err := questionservice.GetById(params.ID)
+	if err != nil || questionObj.ID <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
 
+	if res := utils.CopyStructFields(params, questionObj); !res {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
+	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
+		questionObj.Tags = string(s)
+	}
+	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
+		questionObj.Judgecase = string(s)
+	}
+	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
+		questionObj.Judgeconfig = string(s)
+	}
+
+	// 参数校验
+	questionservice.ValidQuestion(this.Ctx, questionObj, false)
+
+	loginUser := userservice.GetLoginUser(this.Ctx)
+
 	// 仅本人或管理员可编辑
-	if utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.Userid, loginUser.ID) || !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
 
-	dbparams := question.QuestionEditRequest2DBParams(this.Ctx, &params)
-
-	if err := questionservice.UpdateById(dbparams); err != nil {
+	if err := questionservice.UpdateById(questionObj); err != nil {
+		mylog.Log.Error("更新题目失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "更新失败")
 		return
 	}
@@ -168,35 +168,33 @@ func (this QuestionController) UpdateQuestion() {
 		return
 	}
 
-	var dbmodel entity.Question
-	if res := utils.CopyStructFields(params, &dbmodel); !res {
-		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
-		return
-	}
-	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
-		dbmodel.Tags = string(s)
-	}
-	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		dbmodel.Judgecase = string(s)
-	}
-	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		dbmodel.Judgeconfig = string(s)
-	}
-	// fmt.Printf("%+v\n", dbmodel)
-
-	// 参数校验
-	questionservice.ValidQuestion(this.Ctx, &dbmodel, false)
-
 	// 判断是否存在
-	questionInfo, err := questionservice.GetById(params.ID)
-	if err != nil || questionInfo.ID <= 0 {
+	questionObj, err := questionservice.GetById(params.ID)
+	if err != nil || questionObj.ID <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
 
-	dbparams := question.QuestionUpdateRequest2DBParams(this.Ctx, &params)
+	if res := utils.CopyStructFields(params, questionObj); !res {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
+	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
+		questionObj.Tags = string(s)
+	}
+	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
+		questionObj.Judgecase = string(s)
+	}
+	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
+		questionObj.Judgeconfig = string(s)
+	}
+	// fmt.Printf("%+v\n", questionObj)
 
-	if err := questionservice.UpdateById(dbparams); err != nil {
+	// 参数校验
+	questionservice.ValidQuestion(this.Ctx, questionObj, false)
+
+	if err := questionservice.UpdateById(questionObj); err != nil {
+		mylog.Log.Error("更新题目失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "更新失败")
 		return
 	}
@@ -214,23 +212,24 @@ func (this QuestionController) GetQuestionById() {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
-	questionInfo, err := questionservice.GetById(id)
-	if err != nil || questionInfo.ID <= 0 {
+	questionObj, err := questionservice.GetById(id)
+	if err != nil || questionObj.ID <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
-	// loginUser := userservice.GetLoginUser(this.Ctx)
-	// // 不是本人或管理员，不能直接获取所有信息
-	// if utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.Userid, loginUser.ID) || !userservice.IsAdmin(loginUser) {
-	// 	myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
-	// 	return
-	// }
 
-	respdata := entity.DbConvertQuestion(questionInfo)
-	myresq.Success(this.Ctx, respdata)
+	loginUser := userservice.GetLoginUser(this.Ctx)
+
+	// 不是本人或管理员，不能直接获取所有信息
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
+		return
+	}
+
+	myresq.Success(this.Ctx, questionObj)
 }
 
-// 根据 id 获取（脱敏）
+// 根据 id 获取包装类（脱敏）
 //
 //	@Param			id	path/query		int								true	"题目id"
 //	@router	/question/get/vo [get]
@@ -240,13 +239,13 @@ func (this QuestionController) GetQuestionVOById() {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
-	questionInfo, err := questionservice.GetById(id)
-	if err != nil || questionInfo.ID <= 0 {
+	questionObj, err := questionservice.GetById(id)
+	if err != nil || questionObj.ID <= 0 {
+		mylog.Log.Error("根据 id 获取题目包装类（脱敏）失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
 
-	questionObj := entity.DbConvertQuestion(questionInfo)
 	// 脱敏
 	respdata := questionservice.GetQuestionVO(this.Ctx, questionObj)
 	myresq.Success(this.Ctx, respdata)
@@ -270,10 +269,10 @@ func (this QuestionController) ListQuestionByPage() {
 	}
 
 	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
-	qs := mydb.O.QueryTable("question")
+	qs := mydb.O.QueryTable(new(entity.Question))
 
 	// 构建查询条件
-	qs = questionservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
 	qs = questionservice.GetQuerySeter(qs, params)
 
 	// 执行查询
@@ -310,10 +309,10 @@ func (this QuestionController) ListQuestionVOByPage() {
 	}
 
 	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
-	qs := mydb.O.QueryTable("question")
+	qs := mydb.O.QueryTable(new(entity.Question))
 
 	// 构建查询条件
-	qs = questionservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
 	qs = questionservice.GetQuerySeter(qs, params)
 
 	// 执行查询
@@ -327,7 +326,7 @@ func (this QuestionController) ListQuestionVOByPage() {
 	}
 
 	respdata := map[string]interface{}{
-		"data":  questionservice.GetQuestionVOPage(this.Ctx, questionPage),
+		"data":  questionservice.ListQuestionVO(this.Ctx, questionPage),
 		"total": num,
 	}
 	myresq.Success(this.Ctx, respdata)
@@ -350,15 +349,14 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	}
 
 	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
-	qs := mydb.O.QueryTable("question")
+	qs := mydb.O.QueryTable(new(entity.Question))
 
-	// loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUser := userservice.GetLoginUser(this.Ctx)
 
 	// 构建查询条件
-	qs = questionservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
 	qs = questionservice.GetQuerySeter(qs, params)
-	// qs = qs.Filter("userid", loginUser.ID)
-	qs = qs.Filter("userid", 3)
+	qs = qs.Filter("userid", loginUser.ID)
 
 	// 执行查询
 	var questionPage []*entity.Question
@@ -371,7 +369,7 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	}
 
 	respdata := map[string]interface{}{
-		"data":  questionservice.GetQuestionVOPage(this.Ctx, questionPage),
+		"data":  questionservice.ListQuestionVO(this.Ctx, questionPage),
 		"total": num,
 	}
 	myresq.Success(this.Ctx, respdata)
@@ -381,7 +379,14 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 //
 //	@router	/question_submit/do [post]
 func (this QuestionController) DoQuestionSubmit() {
-
+	var params questionsubmit.QuestionSubmitAddRequest
+	if err := this.BindJSON(&params); err != nil {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
+	// 登录才能提交
+	// loginUser := userservice.GetLoginUser(this.Ctx)
+	// questionsubmitservice.DoQuestionSubmit(params, loginUser)
 }
 
 // 分页获取题目提交列表（除了管理员外，普通用户只能看到非答案、提交代码等公开信息）

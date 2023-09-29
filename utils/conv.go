@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-28 17:20:28
+ * @LastEditTime: 2023-09-29 19:47:02
  * @FilePath: /xoj-backend/utils/conv.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -74,12 +74,20 @@ func CopyStructFields(src, dst interface{}) bool {
 	// 将 dst 转换为反射值,dst 通常是目标结构体的指针，因此需要通过 Elem() 方法获取指针指向的结构体。
 	dstValue := reflect.ValueOf(dst)
 
-	// srcValue.Kind() != reflect.Struct  检查 src 是否是结构体类型
-	// dstValue.Kind() != reflect.Pointer 检查 dst 是否是指针类型
+	// 检查 src 是否是结构体类型
+	if srcValue.Kind() != reflect.Struct {
+		mylog.Log.Error("[CopyStructFields] src 不是结构体类型")
+		return false
+	}
+	// 检查 dst 是否是指针类型
+	if dstValue.Kind() != reflect.Pointer {
+		mylog.Log.Error("[CopyStructFields] dst 不是指针类型")
+		return false
+	}
 	// dstValue.Elem() 返回指针指向的值，然后检查它是否是结构体类型。
-	// dstValue.Elem().Kind() != reflect.Struct 检查目标结构体是否有效
-	if srcValue.Kind() != reflect.Struct || dstValue.Kind() != reflect.Pointer || dstValue.Elem().Kind() != reflect.Struct {
-		mylog.Log.Error("Invalid source or destination type")
+	// 检查目标结构体是否有效
+	if dstValue.Elem().Kind() != reflect.Struct {
+		mylog.Log.Error("[CopyStructFields] dst 结构体无效")
 		return false
 	}
 

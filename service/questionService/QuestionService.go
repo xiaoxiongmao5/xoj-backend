@@ -2,21 +2,18 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:27:02
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-28 23:31:30
+ * @LastEditTime: 2023-09-29 21:30:18
  * @FilePath: /xoj-backend/service/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 package questionservice
 
 import (
-	"database/sql"
-
-	"context"
+	"errors"
 
 	"github.com/beego/beego/v2/client/orm"
-	beecontext "github.com/beego/beego/v2/server/web/context"
+	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/dbsq"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/question"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/vo"
@@ -30,15 +27,15 @@ import (
 // 校验题目是否合法
 //
 //	@param ctx
-//	@param question
+//	@param questionObj
 //	@param add
-func ValidQuestion(ctx *beecontext.Context, question *entity.Question, add bool) {
-	title := question.Title
-	content := question.Content
-	tags := question.Tags
-	answer := question.Answer
-	judgeCase := question.Judgecase
-	judgeConfig := question.Judgeconfig
+func ValidQuestion(ctx *context.Context, questionObj *entity.Question, add bool) {
+	title := questionObj.Title
+	content := questionObj.Content
+	tags := questionObj.Tags
+	answer := questionObj.Answer
+	judgeCase := questionObj.Judgecase
+	judgeConfig := questionObj.Judgeconfig
 	// 创建时，参数不能为空
 	if add {
 		if utils.IsAnyBlank(title, content, tags) {
@@ -69,18 +66,7 @@ func ValidQuestion(ctx *beecontext.Context, question *entity.Question, add bool)
 	}
 }
 
-// 使用 beego 的 ORM 来构建数据库查询时分页条件
-//
-//	@param qs
-//	@param current
-//	@param pageSize
-//	@return orm.QuerySeter
-func GetQuerySeterByPage(qs orm.QuerySeter, current, pageSize int64) orm.QuerySeter {
-	limit, offset := utils.CalculateLimitOffset[int64](current, pageSize)
-	return qs.Limit(limit, offset)
-}
-
-// 使用 beego 的 ORM 来构建数据库查询条件（用户根据哪些字段查询，根据前端传来的请求对象）
+// 获取查询条件（使用 beego 的 ORM 来构建数据库查询条件（用户根据哪些字段查询，根据前端传来的请求对象））
 //
 // @param qs
 // @param queryRequest
@@ -125,44 +111,48 @@ func GetQuerySeter(qs orm.QuerySeter, queryRequest question.QuestionQueryRequest
 		}
 		qs = qs.OrderBy(order) // ORDER BY order DESC
 	}
-	qs = qs.Filter("isdelete", 0)
+	qs = qs.Filter("isDelete", 0)
 	return qs
 }
 
-// GetQuestionVO
+// 获取题目封装
 //
-//	@param original
+//	@param questionObj
 //	@return vo.QuestionVO
-func GetQuestionVO(ctx *beecontext.Context, original *entity.Question) vo.QuestionVO {
-	questionVO := vo.Obj2Vo(original)
+func GetQuestionVO(ctx *context.Context, questionObj *entity.Question) vo.QuestionVO {
+	questionVO := vo.QuestionVO_Obj2Vo(questionObj)
 	// 关联查询用户信息
-	userInfo, err := userservice.GetById(original.Userid)
+	userObj, err := userservice.GetById(questionObj.Userid)
 	if err != nil {
-		userInfo = &entity.User{}
-		mylog.Log.Errorf("查询userId=[%d]的用户信息失败, err=%v", original.Userid, err.Error())
-		myresq.Abort(ctx, myresq.OPERATION_ERROR, "查询失败")
+		mylog.Log.Errorf("查询userId=[%d]的用户信息失败, err=%v", questionObj.Userid, err.Error())
+		questionVO.UserVO = vo.UserVO{}
 		return questionVO
 	}
-	questionVO.UserVO = userservice.GetUserVO(userInfo)
+	questionVO.UserVO = userservice.GetUserVO(userObj)
 	return questionVO
 }
 
-// GetQuestionVOPage
+// 获取脱敏的题目信息列表
 //
 //	@param ctx
-//	@param originalPage
+//	@param list
 //	@return respdata
-func GetQuestionVOPage(ctx *beecontext.Context, originalPage []*entity.Question) (respdata []vo.QuestionVO) {
-	if utils.IsEmpty(originalPage) {
+func ListQuestionVO(ctx *context.Context, list []*entity.Question) (respdata []vo.QuestionVO) {
+	if utils.IsEmpty(list) {
 		return
 	}
 	// 定义一个map，用于存储查询到的用户信息
 	userMap := make(map[int64]*entity.User)
 
-	// 获取 originalPage 中的用户ID列表
+	// 获取 list 中的用户ID列表
 	var userIds []int64
-	for _, questionObj := range originalPage {
-		userIds = append(userIds, questionObj.Userid)
+	userIdsMap := make(map[int64]bool)
+	for _, questionObj := range list {
+		userID := questionObj.Userid
+		if !userIdsMap[userID] {
+			userIdsMap[userID] = true
+			userIds = append(userIds, userID)
+		}
 	}
 
 	// 查询用户信息
@@ -180,54 +170,64 @@ func GetQuestionVOPage(ctx *beecontext.Context, originalPage []*entity.Question)
 	}
 
 	// 填充用户信息
-	for _, questionInfo := range originalPage {
-		questionVO := vo.Obj2Vo(questionInfo)
-		questionVO.UserVO = userservice.GetUserVO(userMap[questionInfo.Userid])
+	for _, questionObj := range list {
+		questionVO := vo.QuestionVO_Obj2Vo(questionObj)
+		if userObj, exists := userMap[questionObj.Userid]; exists {
+			questionVO.UserVO = userservice.GetUserVO(userObj)
+		} else {
+			mylog.Log.Errorf("查询userId=[%d]的用户信息失败", questionObj.Userid)
+			questionVO.UserVO = vo.UserVO{}
+		}
 		respdata = append(respdata, questionVO)
 	}
 	return
 }
 
-func Save(dbparams *dbsq.AddQuestionParams) (sql.Result, error) {
-	conn, err := mydb.GetConn()
-	if err != nil {
+func GetById(id int64) (*entity.Question, error) {
+	var questionObj entity.Question
+	err := mydb.O.QueryTable(new(entity.Question)).Filter("id", id).Filter("isDelete", 0).One(&questionObj)
+	if err == orm.ErrMultiRows {
+		mylog.Log.Errorf("Question 表中存在 id=[%d] 的多条记录, qs.One err=[%v]", id, err.Error())
 		return nil, err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.AddQuestion(ctx, dbparams)
-}
-
-func GetById(id int64) (*dbsq.Question, error) {
-	conn, err := mydb.GetConn()
-	if err != nil {
+	if err == orm.ErrNoRows {
+		mylog.Log.Errorf("Question 表没有找到 id=[%d] 的记录, qs.One err=[%v]", id, err.Error())
 		return nil, err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.GetQuestionById(ctx, id)
+	return &questionObj, nil
 }
 
-func UpdateById(dbparams *dbsq.UpdateQuestionParams) error {
-	conn, err := mydb.GetConn()
+func Save(questionObj *entity.Question) (int64, error) {
+	num, err := mydb.O.Insert(questionObj)
+	if err != nil {
+		return -1, err
+	}
+	return num, nil
+}
+
+func UpdateById(questionObj *entity.Question) error {
+	num, err := mydb.O.Update(questionObj)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.UpdateQuestion(ctx, dbparams)
+	if num == 0 {
+		return errors.New("无更新影响条目")
+	}
+	return nil
 }
 
 func RemoveById(id int64) error {
-	conn, err := mydb.GetConn()
+	questionObj, err := GetById(id)
+	if err != nil {
+		return nil
+	}
+	questionObj.IsDelete = 1
+	num, err := mydb.O.Update(questionObj)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	q := dbsq.New(conn)
-	ctx := context.Background()
-	return q.DeleteQuestion(ctx, id)
+	if num == 0 {
+		return nil
+	}
+	return nil
 }

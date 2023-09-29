@@ -23,7 +23,7 @@ var appConfigMutex sync.Mutex
 // 	config.AppConfig.Database.Host = dbHost
 // 	config.AppConfig.Database.Port, _ = strconv.Atoi(dbPort)
 // 	config.AppConfig.Database.Dbname = dbName
-// 	config.AppConfig.Database.Username = dbUser
+// 	config.AppConfig.Database.UserName = dbUser
 // 	config.AppConfig.Database.Password = dbPassword
 // } else {
 // 	mylog.Log.Info("environment dbconfig error!!")

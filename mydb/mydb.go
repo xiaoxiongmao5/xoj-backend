@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/beego/beego/v2/client/orm"
+	"github.com/beego/beego/v2/client/orm/filter/bean"
+	"github.com/beego/beego/v2/server/web/session"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 )
 
 var DB *sql.DB
 var O orm.Ormer
+var GlobalSessions *session.Manager
 
 func init() {
 	mylog.Log.Info("init begin: mydb")
@@ -23,8 +26,24 @@ func init() {
 	// 注册数据库连接
 	orm.RegisterDataBase("default", "mysql", "root:@/xoj?charset=utf8&parseTime=true")
 
+	// 显示注册默认值的Filter
+	builder := bean.NewDefaultValueFilterChainBuilder(nil, true, true)
+	orm.AddGlobalFilterChain(builder.FilterChain)
+
 	// 创建一个 Orm 实例对象，用于执行数据库操作。 NewOrm 的同时会执行 orm.BootStrap (整个 app 只执行一次)，用以验证模型之间的定义并缓存。（大多数情况下，应该尽量复用Orm 实例，因为本身Orm实例被设计为无状态的，一个数据库对应一个Orm实例）（ps: 但是在使用事务的时候，我们会返回TxOrm的实例，它本身是有状态的，一个事务对应一个TxOrm实例。在使用TxOrm时候，任何衍生查询都是在该事务内。）
 	O = orm.NewOrm()
+
+	sessionConfig := &session.ManagerConfig{
+		CookieName:      "gosessionid",
+		EnableSetCookie: true,
+		Gclifetime:      3600,
+		Maxlifetime:     3600,
+		Secure:          false,
+		CookieLifeTime:  3600,
+		ProviderConfig:  "./tmp",
+	}
+	GlobalSessions, _ = session.NewManager("memory", sessionConfig)
+	go GlobalSessions.GC()
 
 	mylog.Log.Info("init end  : mydb")
 }

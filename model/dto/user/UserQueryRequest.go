@@ -16,17 +16,17 @@ type UserQueryRequest struct {
 	// id
 	ID int64 `json:"id"`
 	// 微信开放平台id
-	Unionid string `json:"unionid"`
+	UnionId string `json:"unionId"`
 	// 公众号openId
-	Mpopenid string `json:"mpopenid"`
+	MpOpenId string `json:"mpOpenId"`
 	// 用户昵称
-	Username string `json:"username"`
+	UserName string `json:"userName"`
 	// 用户头像
-	Useravatar string `json:"useravatar"`
+	UserAvatar string `json:"userAvatar"`
 	// 用户简介
-	Userprofile string `json:"userprofile"`
+	UserProfile string `json:"userProfile"`
 	// 性别
 	Gender int32 `json:"gender"`
 	// 用户角色：user/admin/ban
-	Userrole string `json:"userrole"`
+	UserRole string `json:"userRole"`
 }
