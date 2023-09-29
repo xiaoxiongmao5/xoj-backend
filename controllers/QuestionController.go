@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 20:53:22
+ * @LastEditTime: 2023-09-29 23:08:01
  * @FilePath: /xoj-backend/controllers/question/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -21,6 +21,7 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
 	commonservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/commonService"
 	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionService"
+	questionsubmitservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionSubmitService"
 	userservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/userService"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
 )
@@ -385,13 +386,43 @@ func (this QuestionController) DoQuestionSubmit() {
 		return
 	}
 	// 登录才能提交
-	// loginUser := userservice.GetLoginUser(this.Ctx)
-	// questionsubmitservice.DoQuestionSubmit(params, loginUser)
+	loginUser := userservice.GetLoginUser(this.Ctx)
+
+	id := questionsubmitservice.DoQuestionSubmit(this.Ctx, params, loginUser)
+
+	myresq.Success(this.Ctx, id)
 }
 
 // 分页获取题目提交列表（除了管理员外，普通用户只能看到非答案、提交代码等公开信息）
 //
 //	@router	/question_submit/list/page [post]
 func (this QuestionController) ListQuestionSubmitByPage() {
+	var params questionsubmit.QuestionSubmitQueryRequest
+	if err := this.BindJSON(&params); err != nil {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
 
+	qs := mydb.O.QueryTable(new(entity.QuestionSubmit))
+	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
+	qs = questionsubmitservice.GetQuerySeter(qs, params)
+
+	var questionSubmitPage []*entity.QuestionSubmit
+
+	num, err := qs.All(&questionSubmitPage)
+	if err != nil {
+		mylog.Log.Errorf("ListQuestionSubmitByPage qs.All error: %v", err.Error())
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
+	loginUser := userservice.GetLoginUser(this.Ctx)
+
+	questionSubmitVOPage := questionsubmitservice.ListQuestionSubmitVOPage(this.Ctx, questionSubmitPage, loginUser)
+
+	respdata := map[string]interface{}{
+		"data":  questionSubmitVOPage,
+		"total": num,
+	}
+	myresq.Success(this.Ctx, respdata)
 }

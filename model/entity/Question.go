@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:31:11
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 14:28:44
+ * @LastEditTime: 2023-09-29 22:18:53
  * @FilePath: /xoj-backend/model/entity/Question.go
  * @Description: 实体类，表字段
  */
@@ -49,38 +49,3 @@ func (this *Question) TableEngine() string {
 func (this *Question) TableName() string {
 	return "question"
 }
-
-// func DbConvertQuestion(original *dbsq.Question) *Question {
-// 	converted := &Question{
-// 		ID:          original.ID,
-// 		Submitnum:   original.Submitnum,
-// 		Acceptednum: original.Acceptednum,
-// 		Thumbnum:    original.Thumbnum,
-// 		Favournum:   original.Favournum,
-// 		Userid:      original.Userid,
-// 		CreateTime:  original.CreateTime,
-// 		UpdateTime:  original.UpdateTime,
-// 		IsDelete:    original.IsDelete,
-// 	}
-
-// 	if original.Title.Valid {
-// 		converted.Title = original.Title.String
-// 	}
-// 	if original.Content.Valid {
-// 		converted.Content = original.Content.String
-// 	}
-// 	if original.Tags.Valid {
-// 		converted.Tags = original.Tags.String
-// 	}
-// 	if original.Answer.Valid {
-// 		converted.Answer = original.Answer.String
-// 	}
-// 	if original.Judgecase.Valid {
-// 		converted.Judgecase = original.Judgecase.String
-// 	}
-// 	if original.Judgeconfig.Valid {
-// 		converted.Judgeconfig = original.Judgeconfig.String
-// 	}
-
-// 	return converted
-// }

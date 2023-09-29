@@ -8,7 +8,7 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/user"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/enums"
+	userroleenum "github.com/xiaoxiongmao5/xoj/xoj-backend/model/enums/UserRoleEnum"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/vo"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
@@ -150,7 +150,7 @@ func GetLoginUserPermitNull(ctx *context.Context) {
 //	@param user
 //	@return bool
 func IsAdmin(user *entity.User) bool {
-	return utils.CheckSame[string]("是否为管理员", user.UserRole, enums.ADMIN.GetValue())
+	return utils.CheckSame[string]("是否为管理员", user.UserRole, userroleenum.ADMIN.GetValue())
 }
 
 // 用户注销
