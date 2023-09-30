@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 20:30:47
+ * @LastEditTime: 2023-09-30 14:17:14
  * @FilePath: /xoj-backend/main.go
  */
 package main
@@ -11,8 +11,7 @@ import (
 	"net/http"
 
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/loadconfig"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
+	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/docs"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/routers"
@@ -25,16 +24,6 @@ import (
 
 func init() {
 	mylog.Log.Info("init begin: main")
-
-	var err error
-	// 加载App配置数据
-	if config.AppConfig, err = loadconfig.LoadAppConfig(); err != nil {
-		panic(err)
-	}
-	// 加载APP动态配置数据
-	if config.AppConfigDynamic, err = loadconfig.LoadAppConfigDynamic(); err != nil {
-		panic(err)
-	}
 
 	mylog.Log.Info("init end  : main")
 }
@@ -51,32 +40,12 @@ func init() {
 //	@license.name	license.name
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host	localhost:8091
+//	@host	localhost:8091
 func main() {
-	var err error
-
-	// // 实例化日志对象
-	// if mylog.Log, err = mylog.SetupLogger(); err != nil {
-	// 	panic(err)
-	// }
 	defer mylog.Log.Writer().Close()
 
-	// // 加载App配置数据
-	// if config.AppConfig, err = loadconfig.LoadAppConfig(); err != nil {
-	// 	panic(err)
-	// }
-	// // 加载APP动态配置数据
-	// if config.AppConfigDynamic, err = loadconfig.LoadAppConfigDynamic(); err != nil {
-	// 	panic(err)
-	// }
 	// 启动配置文件加载协程
-	go loadconfig.LoadAppDynamicConfigCycle()
-
-	// 初始化数据库连接池
-	if mydb.DB, err = mydb.ConnectionPool(config.AppConfig.Database.SavePath, config.AppConfig.Database.MaxOpenConns); err != nil {
-		panic(err)
-	}
-	defer mydb.DB.Close()
+	go config.LoadAppDynamicConfigCycle()
 
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
@@ -110,7 +79,7 @@ func main() {
 
 	// 处理跨域
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"http://localhost:8080/", "https://*.jiexiong.com"}, //"*"
+		AllowOrigins:     []string{"http://localhost:8080", "https://*.jiexiong.com"}, //"*"
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -133,6 +102,17 @@ func main() {
 
 	// // 设置 cookie 的过期时间，cookie 是用来存储保存在客户端的数据
 	// beego.BConfig.WebConfig.Session.SessionCookieLifeTime = 3600
+
+	// beego.BConfig.WebConfig.StaticDir = map[string]string{
+	// 	"/swagger": "./docs",
+	// }
+
+	// beego.BConfig.WebConfig.StaticDir["/swagger"] = "docs"
+	beego.BConfig.WebConfig.StaticDir = map[string]string{
+		// prefix => directory
+		"/swagger": "./docs",
+		"/view":    "./views",
+	}
 
 	beego.Run()
 }

@@ -1,4 +1,5 @@
 log/*
-api.rest
+api*.rest
 doc/*
 swagger/*
+dbsq/*

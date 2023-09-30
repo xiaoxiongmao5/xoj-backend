@@ -2,8 +2,5 @@
     "database": {
       "savePath": "root:@/xoj?charset=utf8&parseTime=true",
       "maxOpenConns": 10
-    },
-    "server": {
-      "port": 8091
     }
   }

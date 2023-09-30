@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 23:08:01
+ * @LastEditTime: 2023-09-30 11:56:47
  * @FilePath: /xoj-backend/controllers/question/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -30,10 +30,14 @@ type QuestionController struct {
 	beego.Controller
 }
 
-// 创建
-//
-//	@Param	request	body	question.QuestionAddRequest	true	"注册信息"
-//	@router	/question/add [post]
+//	@Summary		添加
+//	@Description	添加
+//	@Tags			题目增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionAddRequest	true	"添加参数"
+//	@Success		200		{object}	object						"响应数据"
+//	@Router			/question/add [post]
 func (this QuestionController) AddQuestion() {
 	var params question.QuestionAddRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -49,18 +53,18 @@ func (this QuestionController) AddQuestion() {
 	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
 		questionObj.Tags = string(s)
 	}
-	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		questionObj.Judgecase = string(s)
+	if s, err := json.Marshal(params.JudgeCase); err == nil && string(s) != "null" {
+		questionObj.JudgeCase = string(s)
 	}
-	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		questionObj.Judgeconfig = string(s)
+	if s, err := json.Marshal(params.JudgeConfig); err == nil && string(s) != "null" {
+		questionObj.JudgeConfig = string(s)
 	}
 
 	// 参数校验
 	questionservice.ValidQuestion(this.Ctx, &questionObj, true)
 
 	loginUser := userservice.GetLoginUser(this.Ctx)
-	questionObj.Userid = loginUser.ID
+	questionObj.UserId = loginUser.ID
 
 	id, err := questionservice.Save(&questionObj)
 	if err != nil {
@@ -74,10 +78,14 @@ func (this QuestionController) AddQuestion() {
 	myresq.Success(this.Ctx, id)
 }
 
-// 删除
-//
-//	@Param	request	body	common.IdRequest	true	"题目id"
-//	@router	/question/delete [post]
+//	@Summary		删除
+//	@Description	删除
+//	@Tags			题目增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		common.IdRequest	true	"删除id"
+//	@Success		200		{object}	object				"响应数据"
+//	@Router			/question/delete [post]
 func (this QuestionController) DeleteQuestion() {
 	var params common.IdRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -94,7 +102,7 @@ func (this QuestionController) DeleteQuestion() {
 		return
 	}
 	// 仅本人或管理员可删除
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
@@ -107,9 +115,14 @@ func (this QuestionController) DeleteQuestion() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 编辑（用户）
-//
-//	@router	/question/edit [post]
+//	@Summary		更新
+//	@Description	更新
+//	@Tags			用户增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionEditRequest	true	"更新参数"
+//	@Success		200		{object}	object							"响应数据"
+//	@Router			/question/edit [post]
 func (this QuestionController) EditQuestion() {
 	var params question.QuestionEditRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -131,11 +144,11 @@ func (this QuestionController) EditQuestion() {
 	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
 		questionObj.Tags = string(s)
 	}
-	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		questionObj.Judgecase = string(s)
+	if s, err := json.Marshal(params.JudgeCase); err == nil && string(s) != "null" {
+		questionObj.JudgeCase = string(s)
 	}
-	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		questionObj.Judgeconfig = string(s)
+	if s, err := json.Marshal(params.JudgeConfig); err == nil && string(s) != "null" {
+		questionObj.JudgeConfig = string(s)
 	}
 
 	// 参数校验
@@ -144,7 +157,7 @@ func (this QuestionController) EditQuestion() {
 	loginUser := userservice.GetLoginUser(this.Ctx)
 
 	// 仅本人或管理员可编辑
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
@@ -158,10 +171,14 @@ func (this QuestionController) EditQuestion() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 更新（仅管理员）
-//
-//	@router				/question/update [post]
-//	@AuthCheck(mustRole	= UserConstant.ADMIN_ROLE)
+//	@Summary		更新
+//	@Description	更新
+//	@Tags			题目增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionUpdateRequest	true	"更新参数"
+//	@Success		200		{object}	object							"响应数据"
+//	@Router			/question/update [post]
 func (this QuestionController) UpdateQuestion() {
 	var params question.QuestionUpdateRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -183,11 +200,11 @@ func (this QuestionController) UpdateQuestion() {
 	if s, err := json.Marshal(params.Tags); err == nil && string(s) != "null" {
 		questionObj.Tags = string(s)
 	}
-	if s, err := json.Marshal(params.Judgecase); err == nil && string(s) != "null" {
-		questionObj.Judgecase = string(s)
+	if s, err := json.Marshal(params.JudgeCase); err == nil && string(s) != "null" {
+		questionObj.JudgeCase = string(s)
 	}
-	if s, err := json.Marshal(params.Judgeconfig); err == nil && string(s) != "null" {
-		questionObj.Judgeconfig = string(s)
+	if s, err := json.Marshal(params.JudgeConfig); err == nil && string(s) != "null" {
+		questionObj.JudgeConfig = string(s)
 	}
 	// fmt.Printf("%+v\n", questionObj)
 
@@ -203,10 +220,14 @@ func (this QuestionController) UpdateQuestion() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 根据 id 获取
-//
-//	@Param			id	path/query		int								true	"题目id"
-//	@router	/question/get [get]
+//	@Summary		根据 id 获取
+//	@Description	根据 id 获取
+//	@Tags			题目增删改查（管理员）
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int							true	"id"
+//	@Success		200	{object}	swagtype.QuestionResponse	"响应数据"
+//	@Router			/question/get [get]
 func (this QuestionController) GetQuestionById() {
 	id, err := this.GetInt64("id")
 	if err != nil || id <= 0 {
@@ -222,7 +243,7 @@ func (this QuestionController) GetQuestionById() {
 	loginUser := userservice.GetLoginUser(this.Ctx)
 
 	// 不是本人或管理员，不能直接获取所有信息
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.Userid, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
@@ -230,10 +251,14 @@ func (this QuestionController) GetQuestionById() {
 	myresq.Success(this.Ctx, questionObj)
 }
 
-// 根据 id 获取包装类（脱敏）
-//
-//	@Param			id	path/query		int								true	"题目id"
-//	@router	/question/get/vo [get]
+//	@Summary		根据 id 获取包装类（脱敏）
+//	@Description	根据 id 获取包装类（脱敏）
+//	@Tags			题目增删改查
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int							true	"id"
+//	@Success		200	{object}	swagtype.QuestionVOResponse	"响应数据"
+//	@Router			/question/get/vo [get]
 func (this QuestionController) GetQuestionVOById() {
 	id, err := this.GetInt64("id")
 	if err != nil || id <= 0 {
@@ -252,10 +277,14 @@ func (this QuestionController) GetQuestionVOById() {
 	myresq.Success(this.Ctx, respdata)
 }
 
-// 分页获取题目列表（仅管理员）
-//
-//	@router				/question/list/page [post]
-//	@AuthCheck(mustRole	= UserConstant.ADMIN_ROLE)
+//	@Summary		分页获取列表
+//	@Description	分页获取列表
+//	@Tags			题目增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionQueryRequest	true	"查询参数"
+//	@Success		200		{object}	swagtype.ListQuestionResponse	"响应数据"
+//	@Router			/question/list/page [post]
 func (this QuestionController) ListQuestionByPage() {
 	var params question.QuestionQueryRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -293,9 +322,14 @@ func (this QuestionController) ListQuestionByPage() {
 	myresq.Success(this.Ctx, respdata)
 }
 
-// 分页获取题目列表（封装类）
-//
-//	@router	/question/list/page/vo [post]
+//	@Summary		分页获取封装列表
+//	@Description	分页获取封装列表
+//	@Tags			题目增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionQueryRequest	true	"查询参数"
+//	@Success		200		{object}	swagtype.ListQuestionVOResponse	"响应数据"
+//	@Router			/question/list/page/vo [post]
 func (this QuestionController) ListQuestionVOByPage() {
 	var params question.QuestionQueryRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -333,9 +367,14 @@ func (this QuestionController) ListQuestionVOByPage() {
 	myresq.Success(this.Ctx, respdata)
 }
 
-// 分页获取当前用户创建的资源列表
-//
-//	@router	/question/my/list/page/vo [post]
+//	@Summary		分页获取当前用户创建的资源列表
+//	@Description	分页获取当前用户创建的资源列表
+//	@Tags			题目增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		question.QuestionQueryRequest	true	"查询参数"
+//	@Success		200		{object}	swagtype.ListQuestionVOResponse	"响应数据"
+//	@Router			/question/my/list/page/vo [post]
 func (this QuestionController) ListMyQuestionVOByPage() {
 	var params question.QuestionQueryRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -357,7 +396,7 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	// 构建查询条件
 	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
 	qs = questionservice.GetQuerySeter(qs, params)
-	qs = qs.Filter("userid", loginUser.ID)
+	qs = qs.Filter("userId", loginUser.ID)
 
 	// 执行查询
 	var questionPage []*entity.Question
@@ -376,9 +415,14 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	myresq.Success(this.Ctx, respdata)
 }
 
-// 提交题目
-//
-//	@router	/question_submit/do [post]
+//	@Summary		提交题目
+//	@Description	提交题目
+//	@Tags			题目增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		questionsubmit.QuestionSubmitAddRequest	true	"提交参数"
+//	@Success		200		{object}	object									"响应数据"
+//	@Router			/question/question_submit/do [post]
 func (this QuestionController) DoQuestionSubmit() {
 	var params questionsubmit.QuestionSubmitAddRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -393,9 +437,14 @@ func (this QuestionController) DoQuestionSubmit() {
 	myresq.Success(this.Ctx, id)
 }
 
-// 分页获取题目提交列表（除了管理员外，普通用户只能看到非答案、提交代码等公开信息）
-//
-//	@router	/question_submit/list/page [post]
+//	@Summary		分页获取题目提交列表
+//	@Description	分页获取题目提交列表（除了管理员外，普通用户只能看到非答案、提交代码等公开信息）
+//	@Tags			题目增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		questionsubmit.QuestionSubmitQueryRequest	true	"查询参数"
+//	@Success		200		{object}	swagtype.ListQuestionSubmitVOResponse		"响应数据"
+//	@Router			/question/question_submit/list/page [post]
 func (this QuestionController) ListQuestionSubmitByPage() {
 	var params questionsubmit.QuestionSubmitQueryRequest
 	if err := this.BindJSON(&params); err != nil {

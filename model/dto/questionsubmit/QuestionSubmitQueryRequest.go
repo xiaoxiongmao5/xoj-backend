@@ -20,5 +20,5 @@ type QuestionSubmitQueryRequest struct {
 	// 题目 id
 	QuestionId int64 `json:"questionId"`
 	// 用户 id
-	Userid int64 `json:"userId"`
+	UserId int64 `json:"userId"`
 }

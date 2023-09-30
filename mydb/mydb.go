@@ -10,6 +10,7 @@ import (
 	"github.com/beego/beego/v2/client/orm/filter/bean"
 	"github.com/beego/beego/v2/server/web/session"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 )
 
@@ -24,7 +25,7 @@ func init() {
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 
 	// 注册数据库连接
-	orm.RegisterDataBase("default", "mysql", "root:@/xoj?charset=utf8&parseTime=true")
+	orm.RegisterDataBase("default", "mysql", config.AppConfig.Database.SavePath)
 
 	// 显示注册默认值的Filter
 	builder := bean.NewDefaultValueFilterChainBuilder(nil, true, true)
@@ -49,6 +50,14 @@ func init() {
 }
 
 // 创建数据库连接池
+// 使用：
+// // 初始化数据库连接池
+//
+//	if mydb.DB, err = mydb.ConnectionPool(config.AppConfig.Database.SavePath, config.AppConfig.Database.MaxOpenConns); err != nil {
+//		panic(err)
+//	}
+//
+// defer mydb.DB.Close()
 func ConnectionPool(savePath string, maxOpenConns int) (*sql.DB, error) {
 	db, err := sql.Open("mysql", savePath)
 	if err != nil {

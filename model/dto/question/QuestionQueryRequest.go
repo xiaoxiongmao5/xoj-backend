@@ -23,5 +23,5 @@ type QuestionQueryRequest struct {
 	// 题目答案
 	Answer string `json:"answer"`
 	// 创建用户 id
-	Userid int64 `json:"userid"`
+	UserId int64 `json:"userId"`
 }

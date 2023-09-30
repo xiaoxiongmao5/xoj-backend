@@ -31,7 +31,7 @@ type QuestionSubmit struct {
 	JudgeInfo  string    `json:"judgeInfo" orm:"column(judgeInfo);type(text);null;description(判题信息-json 对象)"`
 	Status     int32     `json:"status" orm:"column(status);default(0);description(判题状态:0-待判题、1-判题中、2-成功、3-失败）)"`
 	QuestionId int64     `json:"questionId" orm:"column(questionId);index;description(题目 id)"`
-	Userid     int64     `json:"userId" orm:"column(userId);index;description(创建用户 id)"`
+	UserId     int64     `json:"userId" orm:"column(userId);index;description(创建用户 id)"`
 	CreateTime time.Time `json:"createTime" orm:"column(createTime);auto_now_add;type(datetime);description(创建时间)"`
 	UpdateTime time.Time `json:"updateTime" orm:"column(updateTime);auto_now;type(datetime);description(更新时间)"`
 	IsDelete   int32     `json:"isDelete" orm:"column(isDelete);default(0);description(是否删除)"`

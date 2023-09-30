@@ -31,8 +31,14 @@ func (this UserController) Prepare() {
 func (this UserController) Finish() {
 }
 
-// 用户注册
-// /register
+//	@Summary		用户注册
+//	@Description	用户注册
+//	@Tags			用户相关
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserRegisterRequest	true	"注册信息"
+//	@Success		200		{object}	object						"响应数据"
+//	@Router			/user/register [post]
 func (this UserController) UserRegister() {
 	var params user.UserRegisterRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -45,8 +51,14 @@ func (this UserController) UserRegister() {
 	myresq.Success(this.Ctx, id)
 }
 
-// 用户登录
-// /login
+//	@Summary		用户登录
+//	@Description	用户登录
+//	@Tags			用户相关
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserLoginRequest			true	"账号密码"
+//	@Success		200		{object}	swagtype.LoginUserVOResponse	"响应数据"
+//	@Router			/user/login [post]
 func (this UserController) UserLogin() {
 	var params user.UserLoginRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -59,13 +71,16 @@ func (this UserController) UserLogin() {
 }
 
 // 用户登录（微信开放平台）
-// /login/wx_open
-func (this UserController) UserLoginByWxOpen() {
+// /user/login/wx_open
+func (this UserController) UserLoginByWxOpen() {}
 
-}
-
-// 用户注销
-// /logout
+//	@Summary		用户退出
+//	@Description	用户退出
+//	@Tags			用户相关
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Success		200	{object}	object	"响应数据"
+//	@Router			/user/logout [post]
 func (this UserController) UserLogout() {
 	ok := userservice.UserLogout(this.Ctx)
 	if !ok {
@@ -75,16 +90,26 @@ func (this UserController) UserLogout() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 获取当前登录用户
-// /get/login
+//	@Summary		获取当前登录用户
+//	@Description	获取当前登录用户
+//	@Tags			用户相关
+//	@Produce		application/json
+//	@Success		200	{object}	swagtype.LoginUserVOResponse	"响应数据"
+//	@Router			/user/get/login [get]
 func (this UserController) GetLoginUser() {
 	loginUser := userservice.GetLoginUser(this.Ctx)
 
 	myresq.Success(this.Ctx, userservice.GetLoginUserVO(loginUser))
 }
 
-// 增删改查（管理员）
-// /add
+//	@Summary		添加
+//	@Description	添加
+//	@Tags			用户增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserAddRequest	true	"添加参数"
+//	@Success		200		{object}	object				"响应数据"
+//	@Router			/user/add [post]
 func (this UserController) AddUser() {
 	var params user.UserAddRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -108,8 +133,14 @@ func (this UserController) AddUser() {
 	myresq.Success(this.Ctx, id)
 }
 
-// 删除用户（管理员）
-// /delete
+//	@Summary		删除
+//	@Description	删除
+//	@Tags			用户增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		common.IdRequest	true	"删除id"
+//	@Success		200		{object}	object				"响应数据"
+//	@Router			/user/delete [post]
 func (this UserController) DeleteUser() {
 	var params common.IdRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -131,8 +162,14 @@ func (this UserController) DeleteUser() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 更新用户（管理员）
-// /update
+//	@Summary		更新
+//	@Description	更新
+//	@Tags			用户增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserUpdateRequest	true	"更新参数"
+//	@Success		200		{object}	object					"响应数据"
+//	@Router			/user/update [post]
 func (this UserController) UpdateUser() {
 	var params user.UserUpdateRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -160,11 +197,14 @@ func (this UserController) UpdateUser() {
 	myresq.Success(this.Ctx, nil)
 }
 
-// 根据 id 获取用户（仅管理员）
-//
-//	@Param			id	path/query		int								true	"用户id"
-//
-// /get [get]
+//	@Summary		根据 id 获取
+//	@Description	根据 id 获取
+//	@Tags			用户增删改查（管理员）
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int						true	"id"
+//	@Success		200	{object}	swagtype.UserResponse	"响应数据"
+//	@Router			/user/get [get]
 func (this UserController) GetUserById() {
 	id, err := this.GetInt64("id")
 	if err != nil || id <= 0 {
@@ -180,11 +220,14 @@ func (this UserController) GetUserById() {
 	myresq.Success(this.Ctx, userObj)
 }
 
-// 根据 id 获取包装类（脱敏）
-//
-//	@Param			id	path/query		int								true	"用户id"
-//
-// /get/vo	[get]
+//	@Summary		根据 id 获取包装类（脱敏）
+//	@Description	根据 id 获取包装类（脱敏）
+//	@Tags			用户增删改查
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int						true	"id"
+//	@Success		200	{object}	swagtype.UserVOResponse	"响应数据"
+//	@Router			/user/get/vo [get]
 func (this UserController) GetUserVOById() {
 	id, err := this.GetInt64("id")
 	if err != nil || id <= 0 {
@@ -200,8 +243,14 @@ func (this UserController) GetUserVOById() {
 	myresq.Success(this.Ctx, userservice.GetUserVO(userObj))
 }
 
-// 分页获取用户列表（仅管理员）
-// /list/page  [post]
+//	@Summary		分页获取列表
+//	@Description	分页获取列表
+//	@Tags			用户增删改查（管理员）
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserQueryRequest		true	"查询参数"
+//	@Success		200		{object}	swagtype.ListUserResponse	"响应数据"
+//	@Router			/user/list/page [post]
 func (this UserController) ListUserByPage() {
 	var params user.UserQueryRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -231,8 +280,14 @@ func (this UserController) ListUserByPage() {
 
 }
 
-// 分页获取用户封装列表
-// /list/page/vo [post]
+//	@Summary		分页获取封装列表
+//	@Description	分页获取封装列表
+//	@Tags			用户增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserQueryRequest		true	"查询参数"
+//	@Success		200		{object}	swagtype.ListUserVOResponse	"响应数据"
+//	@Router			/user/list/page/vo [post]
 func (this UserController) ListUserVOByPage() {
 	var params user.UserQueryRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -268,8 +323,14 @@ func (this UserController) ListUserVOByPage() {
 
 }
 
-// 更新个人信息
-// /update/my [post]
+//	@Summary		更新个人信息
+//	@Description	更新个人信息
+//	@Tags			用户增删改查
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body		user.UserUpdateMyRequest	true	"查询参数"
+//	@Success		200		{object}	object						"响应数据"
+//	@Router			/user/update/my [post]
 func (this UserController) UpdateMyUser() {
 	var params user.UserUpdateMyRequest
 	if err := this.BindJSON(&params); err != nil {
@@ -287,113 +348,4 @@ func (this UserController) UpdateMyUser() {
 	}
 
 	myresq.Success(this.Ctx, nil)
-}
-
-// @Title			GetUserInfoByUserAccount
-// @Description	根据用户的 Cookie 获取用户信息
-// @Tags			用户相关
-// @Produce		application/json
-// @Success		200	{object}	object	"用户信息"
-// @router			/user/uinfo [get]
-// func (this UserController) GetUserInfoByUserAccount() {
-// 	loginUser := service.GetLoginUser(this.Ctx)
-// 	myresq.Success(this.Ctx, models.ConvertToNormalUser(loginUser))
-// }
-
-// @Title			Register
-// @Description	用户注册
-// @Tags			用户相关
-// @Accept			application/json
-// @Produce		application/json
-// @Param			request	body		user.UserRegisterRequest	true	"注册信息"
-// @Success		200		{object}	object
-// @router			/user/register [post]
-// func (this UserController) Register() {
-// 	var params user.UserRegisterRequest
-// 	if err := this.BindJSON(&params); err != nil {
-// 		mylog.Log.Errorf("UserRegisterParams err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
-// 		return
-// 	}
-
-// 	// 注册用户
-// 	if _, err := service.CreateUser(&params); err != nil {
-// 		mylog.Log.Errorf("service.CreateUser err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.CREATE_USER_FAILED, err.Error())
-// 		return
-// 	}
-
-// 	myresq.Success(this.Ctx, nil)
-// }
-
-// @Title			Login
-// @Summary		用户登录
-// @Description	用户登录
-// @Tags			用户相关
-// @Accept			application/x-www-form-urlencoded
-// @Produce		application/json
-// @Param			request	formData	user.UserLoginRequest	true	"账号密码"
-// @Success		200		{object}	object
-// @router			/user/login [post]
-// func (this UserController) Login() {
-// 	// 检查用户是否已经登录
-// 	// tokenCookie := this.Ctx.GetCookie("token")
-// 	// if tokenCookie != "" {
-// 	// 已经登录，直接返回登录成功
-// 	// ghandle.HandlerSuccess(c, "Already logged in", nil)
-// 	// return
-// 	// }
-// 	// service.DeleteToken(ctx)
-
-// 	var params user.UserLoginRequest
-// 	if err := this.BindForm(&params); err != nil {
-// 		mylog.Log.Errorf("UserLoginParams err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
-// 		return
-// 	}
-
-// 	// 用户是否存在（获取用户信息）
-// 	userInfo, err := service.GetUserInfoByUserAccount(params.UserAccount)
-// 	if err != nil {
-// 		mylog.Log.Errorf("q.GetUserInfoByUserAccount err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.USER_NOT_EXIST, "")
-// 		return
-// 	}
-// 	mylog.Log.Infof("拿到用户信息了%v", userInfo)
-
-// 	// 验证密码是否正常
-// 	if err := utils.CheckHashPasswordByBcrypt(userInfo.UserPassword, params.UserPassword); err != nil {
-// 		mylog.Log.Errorf("CheckHashPasswordByBcrypt err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.USER_PASSWORD_ERROR, "账号不存在或者密码验证错误")
-// 		return
-// 	}
-
-// 	// 生成token
-// 	token, err := utils.GenerateToken(params.UserAccount, userInfo.UserRole)
-// 	if err != nil {
-// 		mylog.Log.Errorf("utils.GenerateToken err=%v", err.Error())
-// 		myresq.Abort(this.Ctx, myresq.GENERATE_TOKEN_FAILED, err.Error())
-// 		return
-// 	}
-
-// 	// 存储token
-// 	store.TokenMemoryStore[token] = true
-
-// 	// 返回token到前端
-// 	referer := this.Ctx.Request.Referer()
-// 	mylog.Log.Info("refer=", referer) //http://localhost:8080/
-// 	domain, _ := utils.GetDomainFromReferer(referer)
-// 	mylog.Log.Info("domain=", domain) //localhost
-// 	this.Ctx.SetCookie("token", token, 3600, "/", domain, false, true)
-
-// 	myresq.Success(this.Ctx, models.ConvertToNormalUser(userInfo))
-// }
-
-// @Title			logout
-// @Description	Logs out current logged in user session
-// @Success		200	{string}	logout	success
-// @router			/logout [get]
-func (this UserController) Logout() {
-	this.Data["json"] = "logout success"
-	this.ServeJSON()
 }

@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 19:47:02
+ * @LastEditTime: 2023-09-30 12:20:01
  * @FilePath: /xoj-backend/utils/conv.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -64,10 +64,6 @@ func String2Int64(str string) (num int64, err error) {
 }
 
 // 将源结构的字段值复制到目标结构中
-//
-//	@param src struct
-//	@param dst pointer
-//	@return bool
 func CopyStructFields(src, dst interface{}) bool {
 	//将 src 转换为反射值reflect.Value,以便后续可以通过反射操作源结构体的字段。
 	srcValue := reflect.ValueOf(src)

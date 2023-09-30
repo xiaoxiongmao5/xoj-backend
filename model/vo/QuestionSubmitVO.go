@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:39:07
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 09:18:00
+ * @LastEditTime: 2023-09-30 10:23:59
  * @FilePath: /xoj-backend/model/vo/UserVO.go
  * @Description: 专门返回给前端用的，可以节约网络传输大小，或者过滤字段（脱敏）、保证安全性。
  */
@@ -31,7 +31,7 @@ type QuestionSubmitVO struct {
 	// 题目 id
 	QuestionId int64 `json:"questionId"`
 	// 用户 id
-	Userid int64 `json:"userId"`
+	UserId int64 `json:"userId"`
 	// 创建时间
 	CreateTime time.Time `json:"createTime"`
 	// 更新时间

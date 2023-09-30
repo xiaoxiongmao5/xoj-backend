@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 10:35:03
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 22:49:47
+ * @LastEditTime: 2023-09-30 13:21:47
  * @FilePath: /xoj-backend/routers/router.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -16,12 +16,13 @@
 package routers
 
 import (
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/controllers"
-
 	beego "github.com/beego/beego/v2/server/web"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/controllers"
 )
 
 func init() {
+	// beego.BConfig.WebConfig.StaticDir["/swagger"] = "docs/swagger"
+
 	// beego.AutoRouter(&controllers.UserController{})
 
 	beego.CtrlPost("/user/register", controllers.UserController.UserRegister)

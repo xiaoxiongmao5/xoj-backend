@@ -139,16 +139,9 @@ func GetLoginUser(ctx *context.Context) *entity.User {
 }
 
 // 获取当前登录用户（允许未登录）
-//
-//	@param ctx
-func GetLoginUserPermitNull(ctx *context.Context) {
-
-}
+func GetLoginUserPermitNull(ctx *context.Context) {}
 
 // 是否为管理员
-//
-//	@param user
-//	@return bool
 func IsAdmin(user *entity.User) bool {
 	return utils.CheckSame[string]("是否为管理员", user.UserRole, userroleenum.ADMIN.GetValue())
 }
@@ -191,9 +184,6 @@ func GetUserVO(userObj *entity.User) vo.UserVO {
 }
 
 // 获取脱敏的用户信息列表
-//
-//	@param list
-//	@return respdata
 func ListUserVO(list []*entity.User) (respdata []vo.UserVO) {
 	if utils.IsEmpty(list) {
 		return
@@ -205,10 +195,6 @@ func ListUserVO(list []*entity.User) (respdata []vo.UserVO) {
 }
 
 // 获取查询条件
-//
-//	@param qs
-//	@param queryRequest
-//	@return orm.QuerySeter
 func GetQuerySeter(qs orm.QuerySeter, queryRequest user.UserQueryRequest) orm.QuerySeter {
 	id := queryRequest.ID
 	unionId := queryRequest.UnionId
