@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:39:07
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 10:23:59
+ * @LastEditTime: 2023-10-02 15:29:32
  * @FilePath: /xoj-backend/model/vo/UserVO.go
  * @Description: 专门返回给前端用的，可以节约网络传输大小，或者过滤字段（脱敏）、保证安全性。
  */
@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/questionsubmit"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/judge/codesandbox/model"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
@@ -24,8 +24,8 @@ type QuestionSubmitVO struct {
 	// 编程语言
 	Language string `json:"language"`
 	// 用户代码
-	Code      string                   `json:"code"`
-	JudgeInfo questionsubmit.JudgeInfo `json:"judgeInfo"`
+	Code      string          `json:"code"`
+	JudgeInfo model.JudgeInfo `json:"judgeInfo"`
 	// 判题状态（0 - 待判题、1 - 判题中、2 - 成功、3 - 失败）
 	Status int32 `json:"status"`
 	// 题目 id

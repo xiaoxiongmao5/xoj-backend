@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 21:42:35
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-29 21:59:41
+ * @LastEditTime: 2023-10-02 13:20:00
  * @FilePath: /xoj-backend/model/enums/QuestionSubmitLanguageEnum.go
  */
 
@@ -14,7 +14,7 @@ func (this QuestionSubmitLanguageEnum) GetValue() string {
 	return string(this)
 }
 
-func (this QuestionSubmitLanguageEnum) GetName() string {
+func (this QuestionSubmitLanguageEnum) GetText() string {
 	return QuestionSubmitLanguageEnumName[this]
 }
 

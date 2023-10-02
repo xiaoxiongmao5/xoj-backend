@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 09:20:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-01 17:05:12
+ * @LastEditTime: 2023-10-02 15:51:02
  */
 package questionsubmitservice
 
@@ -19,7 +19,7 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
-	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionService"
+	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/QuestionService"
 	userservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/userService"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
 )
@@ -60,10 +60,11 @@ func DoQuestionSubmit(ctx *context.Context, params questionsubmit.QuestionSubmit
 	}
 
 	// 执行判题服务
-	// todo
+	// todo 异步执行
 	// CompletableFuture.runAsync(() -> {
 	// 	judgeService.doJudge(id);
 	// });
+	// judge.JudgeServiceImpl{}.DoJudge(id)
 
 	return id
 }
