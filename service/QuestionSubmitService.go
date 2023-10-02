@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-30 12:14:13
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 12:15:49
+ * @LastEditTime: 2023-10-01 17:05:57
  * @FilePath: /xoj-backend/service/QuestionSubmitService.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -34,4 +34,5 @@ type QuestionSubmitService interface {
 	func(questionSubmitObj *entity.QuestionSubmit) (int64, error)
 	func(questionSubmitObj *entity.QuestionSubmit) error
 	func(id int64) error
+	func() (int64, error)
 }

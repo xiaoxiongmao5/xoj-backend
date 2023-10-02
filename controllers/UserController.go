@@ -265,16 +265,21 @@ func (this UserController) ListUserByPage() {
 
 	var userPage []*entity.User
 
-	num, err := qs.All(&userPage)
-	if err != nil {
+	if _, err := qs.All(&userPage); err != nil {
 		mylog.Log.Errorf("ListUserByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	num, err := userservice.GetQuerySeter(mydb.O.QueryTable(new(entity.User)), params).Count()
+	if err != nil {
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
 	respdata := map[string]interface{}{
-		"data":  userPage,
-		"total": num,
+		"records": userPage,
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 
@@ -308,16 +313,21 @@ func (this UserController) ListUserVOByPage() {
 
 	var userPage []*entity.User
 
-	num, err := qs.All(&userPage)
-	if err != nil {
+	if _, err := qs.All(&userPage); err != nil {
 		mylog.Log.Errorf("ListUserByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	num, err := userservice.GetQuerySeter(mydb.O.QueryTable(new(entity.User)), params).Count()
+	if err != nil {
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
 	respdata := map[string]interface{}{
-		"data":  userservice.ListUserVO(userPage),
-		"total": num,
+		"records": userservice.ListUserVO(userPage),
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 

@@ -295,3 +295,11 @@ func RemoveById(id int64) error {
 	}
 	return nil
 }
+
+func GetTotal() (int64, error) {
+	num, err := mydb.O.QueryTable(new(entity.User)).Filter("isDelete", 0).Count()
+	if err != nil {
+		mylog.Log.Errorf("User 表 select count 出错, err=[%v]", err.Error())
+	}
+	return num, err
+}

@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 09:20:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 10:39:42
+ * @LastEditTime: 2023-10-01 17:05:12
  */
 package questionsubmitservice
 
@@ -195,4 +195,12 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	return nil
+}
+
+func GetTotal() (int64, error) {
+	num, err := mydb.O.QueryTable(new(entity.QuestionSubmit)).Filter("isDelete", 0).Count()
+	if err != nil {
+		mylog.Log.Errorf("QuestionSubmit 表 select count 出错, err=[%v]", err.Error())
+	}
+	return num, err
 }

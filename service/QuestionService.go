@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-30 12:10:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 12:19:22
+ * @LastEditTime: 2023-10-01 17:05:52
  * @FilePath: /xoj-backend/service/QuestionService.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -33,4 +33,5 @@ type QuestionService interface {
 	func(questionObj *entity.Question) (int64, error)
 	func(questionObj *entity.Question) error
 	func(id int64) error
+	func() (int64, error)
 }

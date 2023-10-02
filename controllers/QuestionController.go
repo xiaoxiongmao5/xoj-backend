@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 11:56:47
+ * @LastEditTime: 2023-10-01 17:33:14
  * @FilePath: /xoj-backend/controllers/question/question.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -308,16 +308,21 @@ func (this QuestionController) ListQuestionByPage() {
 	// 执行查询
 	var questionPage []*entity.Question
 
-	num, err := qs.All(&questionPage)
-	if err != nil {
+	if _, err := qs.All(&questionPage); err != nil {
 		mylog.Log.Errorf("ListQuestionByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	num, err := questionservice.GetQuerySeter(mydb.O.QueryTable(new(entity.Question)), params).Count()
+	if err != nil {
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
 	respdata := map[string]interface{}{
-		"data":  questionPage,
-		"total": num,
+		"records": questionPage,
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 }
@@ -353,16 +358,21 @@ func (this QuestionController) ListQuestionVOByPage() {
 	// 执行查询
 	var questionPage []*entity.Question
 
-	num, err := qs.All(&questionPage)
-	if err != nil {
+	if _, err := qs.All(&questionPage); err != nil {
 		mylog.Log.Errorf("ListQuestionByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	num, err := questionservice.GetQuerySeter(mydb.O.QueryTable(new(entity.Question)), params).Count()
+	if err != nil {
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
 	respdata := map[string]interface{}{
-		"data":  questionservice.ListQuestionVO(this.Ctx, questionPage),
-		"total": num,
+		"records": questionservice.ListQuestionVO(this.Ctx, questionPage),
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 }
@@ -401,16 +411,21 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	// 执行查询
 	var questionPage []*entity.Question
 
-	num, err := qs.All(&questionPage)
-	if err != nil {
+	if _, err := qs.All(&questionPage); err != nil {
 		mylog.Log.Errorf("ListQuestionByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	num, err := questionservice.GetQuerySeter(mydb.O.QueryTable(new(entity.Question)), params).Filter("userId", loginUser.ID).Count()
+	if err != nil {
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
 	respdata := map[string]interface{}{
-		"data":  questionservice.ListQuestionVO(this.Ctx, questionPage),
-		"total": num,
+		"records": questionservice.ListQuestionVO(this.Ctx, questionPage),
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 }
@@ -458,9 +473,14 @@ func (this QuestionController) ListQuestionSubmitByPage() {
 
 	var questionSubmitPage []*entity.QuestionSubmit
 
-	num, err := qs.All(&questionSubmitPage)
-	if err != nil {
+	if _, err := qs.All(&questionSubmitPage); err != nil {
 		mylog.Log.Errorf("ListQuestionSubmitByPage qs.All error: %v", err.Error())
+		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
+		return
+	}
+
+	num, err := questionsubmitservice.GetQuerySeter(mydb.O.QueryTable(new(entity.QuestionSubmit)), params).Count()
+	if err != nil {
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
@@ -470,8 +490,8 @@ func (this QuestionController) ListQuestionSubmitByPage() {
 	questionSubmitVOPage := questionsubmitservice.ListQuestionSubmitVOPage(this.Ctx, questionSubmitPage, loginUser)
 
 	respdata := map[string]interface{}{
-		"data":  questionSubmitVOPage,
-		"total": num,
+		"records": questionSubmitVOPage,
+		"total":   num,
 	}
 	myresq.Success(this.Ctx, respdata)
 }

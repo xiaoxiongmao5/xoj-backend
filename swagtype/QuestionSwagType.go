@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-30 11:37:36
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 11:57:27
+ * @LastEditTime: 2023-10-01 16:51:13
  * @FilePath: /xoj-backend/swagtype/UserSwagType.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -31,8 +31,8 @@ type ListQuestionResponse struct {
 	Data    listQuestion `json:"data"`
 }
 type listQuestion struct {
-	Data  []entity.Question `json:"data"`
-	Total int64             `json:"total"`
+	Records []entity.Question `json:"records"`
+	Total   int64             `json:"total"`
 }
 
 type ListQuestionVOResponse struct {
@@ -42,8 +42,8 @@ type ListQuestionVOResponse struct {
 }
 
 type listQuestionVO struct {
-	Data  []vo.QuestionVO `json:"data"`
-	Total int64           `json:"total"`
+	Records []vo.QuestionVO `json:"records"`
+	Total   int64           `json:"total"`
 }
 
 type ListQuestionSubmitVOResponse struct {
@@ -53,6 +53,6 @@ type ListQuestionSubmitVOResponse struct {
 }
 
 type listQuestionSubmitVO struct {
-	Data  []vo.QuestionSubmitVO `json:"data"`
-	Total int64                 `json:"total"`
+	Records []vo.QuestionSubmitVO `json:"records"`
+	Total   int64                 `json:"total"`
 }
