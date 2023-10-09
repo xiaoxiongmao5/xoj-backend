@@ -25,7 +25,7 @@ func init() {
 
 // 题目提交
 type QuestionSubmit struct {
-	ID         int64     `json:"id" orm:"column(id);auto;description(id)"`
+	Id         int64     `json:"id" orm:"column(id);auto;description(id)"`
 	Language   string    `json:"language" orm:"column(language);size(128);description(编程语言)"`
 	Code       string    `json:"code" orm:"column(code);type(text);description(用户代码)"`
 	JudgeInfo  string    `json:"judgeInfo" orm:"column(judgeInfo);type(text);null;description(判题信息-json 对象)"`

@@ -1,0 +1,57 @@
+// protoc --go_out=. --go-triple_out=. ./api.proto
+// EDIT IT, change to your package, service and message
+syntax = "proto3";
+package rpc_api;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./;rpc_api";
+
+service Question {
+    rpc GetById(QuestionGetByIdReq) returns (QuestionGetByIdResp) {}
+}
+message QuestionGetByIdReq {
+    int64 questionId = 1;
+}
+message QuestionGetByIdResp {
+    int64 id = 1;
+    string title = 2;
+    string content = 3;
+    string tags = 4;
+    string answer = 5;
+    int32 submitNum = 6;
+    int32 acceptedNum = 7;
+    string judgeCase = 8;
+    string judgeConfig = 9;
+    int32 thumbNum = 10;
+    int32 favourNum = 11;
+    int64 userId = 12;
+    google.protobuf.Timestamp createTime = 13;
+    google.protobuf.Timestamp updateTime = 14;
+    int32 isDelete = 15;
+}
+
+service QuestionSubmit {
+    rpc GetById(QuestionSubmitGetByIdReq) returns (QuestionSubmitGetByIdResp) {}
+    rpc UpdateById(QuestionSubmitGetByIdResp) returns (QuestionSubmitUpdateByIdResp) {}
+}
+
+message QuestionSubmitGetByIdReq {
+    int64 questionSubmitId = 1;
+}
+message QuestionSubmitGetByIdResp {
+    int64 id = 1;
+    string language = 2;
+    string code = 3;
+    string judgeInfo = 4;
+    int32 status = 5;
+    int64 questionId = 6;
+    int64 userId = 7;
+    google.protobuf.Timestamp createTime = 8;
+    google.protobuf.Timestamp updateTime = 9;
+    int32 isDelete = 10;
+}
+
+message QuestionSubmitUpdateByIdResp {
+    bool result = 1;
+}

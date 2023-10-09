@@ -9,5 +9,5 @@
 package common
 
 type IdRequest struct {
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 }

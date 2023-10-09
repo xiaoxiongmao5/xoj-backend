@@ -11,7 +11,7 @@ package user
 // 用户更新请求
 type UserUpdateRequest struct {
 	// id
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 	// 用户昵称
 	UserName string `json:"userName"`
 	// 用户头像

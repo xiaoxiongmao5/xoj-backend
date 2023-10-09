@@ -25,7 +25,7 @@ func init() {
 
 // 题目
 type Question struct {
-	ID          int64     `json:"id" orm:"column(id);auto;description(id)"`
+	Id          int64     `json:"id" orm:"column(id);auto;description(id)"`
 	Title       string    `json:"title" orm:"column(title);size(512);null;description(标题)"`
 	Content     string    `json:"content" orm:"column(content);type(text);null;description(内容)"`
 	Tags        string    `json:"tags" orm:"column(tags);size(1024);null;description(标签列表-json 数组)"`

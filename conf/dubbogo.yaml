@@ -1,0 +1,15 @@
+dubbo:
+  registries:
+    nacos:
+      protocol: nacos
+      address: 127.0.0.1:8848
+  protocols:
+    triple:
+      name: tri
+      port: 20002
+  provider:
+    services:
+      QuestionServerImpl:
+        interface: "" # read from stub
+      QuestionSubmitServerImpl:
+        interface: ""

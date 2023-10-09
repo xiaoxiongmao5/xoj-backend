@@ -2,13 +2,15 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 14:17:14
+ * @LastEditTime: 2023-10-08 23:45:31
  * @FilePath: /xoj-backend/main.go
  */
 package main
 
 import (
 	"net/http"
+
+	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/loadconfig"
 
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/docs"
@@ -49,7 +51,7 @@ func main() {
 
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+		beego.BConfig.WebConfig.StaticDir["/swagger"] = "docs"
 
 		// 开启监控：Admin 管理后台
 		beego.BConfig.Listen.EnableAdmin = true
@@ -108,11 +110,11 @@ func main() {
 	// }
 
 	// beego.BConfig.WebConfig.StaticDir["/swagger"] = "docs"
-	beego.BConfig.WebConfig.StaticDir = map[string]string{
-		// prefix => directory
-		"/swagger": "./docs",
-		"/view":    "./views",
-	}
+	// beego.BConfig.WebConfig.StaticDir = map[string]string{
+	// 	// prefix => directory
+	// 	"/swagger": "./docs",
+	// 	"/view":    "./views",
+	// }
 
 	beego.Run()
 }

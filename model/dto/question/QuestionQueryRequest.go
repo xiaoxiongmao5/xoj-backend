@@ -13,7 +13,7 @@ import "github.com/xiaoxiongmao5/xoj/xoj-backend/model/common"
 type QuestionQueryRequest struct {
 	common.PageRequest // 嵌套PageRequest结构体，相当于继承
 	// id
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 	// 标题
 	Title string `json:"title"`
 	// 内容

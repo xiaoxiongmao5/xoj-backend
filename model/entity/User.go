@@ -26,7 +26,7 @@ func init() {
 
 // 用户
 type User struct {
-	ID           int64     `json:"id" orm:"column(id);auto;description(id)"`
+	Id           int64     `json:"id" orm:"column(id);auto;description(id)"`
 	UserAccount  string    `json:"userAccount" orm:"column(userAccount);unique;description(账号)"`
 	UserPassword string    `json:"userPassword" orm:"column(userPassword);size(512);description(密码)"`
 	UnionId      string    `json:"unionId" orm:"column(unionId);null;index;description(微信开放平台id)"`

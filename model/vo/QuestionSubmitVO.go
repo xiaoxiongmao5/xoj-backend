@@ -20,7 +20,7 @@ import (
 
 type QuestionSubmitVO struct {
 	// id
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 	// 编程语言
 	Language string `json:"language"`
 	// 用户代码

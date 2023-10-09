@@ -14,7 +14,7 @@ import "github.com/xiaoxiongmao5/xoj/xoj-backend/model/common"
 type UserQueryRequest struct {
 	common.PageRequest
 	// id
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 	// 微信开放平台id
 	UnionId string `json:"unionId"`
 	// 公众号openId

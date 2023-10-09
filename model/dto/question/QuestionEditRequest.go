@@ -10,7 +10,7 @@ package question
 
 type QuestionEditRequest struct {
 	// id
-	ID int64 `json:"id"`
+	Id int64 `json:"id"`
 	// 标题
 	Title string `json:"title"`
 	// 内容
