@@ -348,7 +348,12 @@ func (this UserController) UpdateMyUser() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	utils.CopyStructFields(params, loginUser)
 

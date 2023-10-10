@@ -1,8 +1,6 @@
 package userservice
 
 import (
-	"errors"
-
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
@@ -125,12 +123,12 @@ func GetLoginUser(ctx *context.Context) *entity.User {
 		return nil
 	}
 	currentUser, ok := userObj.(entity.User)
-	if !ok || currentUser.ID <= 0 {
+	if !ok || currentUser.Id <= 0 {
 		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
 		return nil
 	}
 	// 从数据库查询（追求性能的话可以注释，直接走缓存）
-	loginUser, err := GetById(currentUser.ID)
+	loginUser, err := GetById(currentUser.Id)
 	if err != nil {
 		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "")
 		return nil
@@ -156,7 +154,7 @@ func UserLogout(ctx *context.Context) bool {
 		return true
 	}
 	currentUser, ok := userObj.(entity.User)
-	if !ok || currentUser.ID <= 0 {
+	if !ok || currentUser.Id <= 0 {
 		myresq.Abort(ctx, myresq.NOT_LOGIN_ERROR, "未登录")
 		return true
 	}
@@ -196,7 +194,7 @@ func ListUserVO(list []*entity.User) (respdata []vo.UserVO) {
 
 // 获取查询条件
 func GetQuerySeter(qs orm.QuerySeter, queryRequest user.UserQueryRequest) orm.QuerySeter {
-	id := queryRequest.ID
+	id := queryRequest.Id
 	unionId := queryRequest.UnionId
 	mpOpenId := queryRequest.MpOpenId
 	userName := queryRequest.UserName
@@ -269,13 +267,14 @@ func Save(userObj *entity.User) (int64, error) {
 	return num, nil
 }
 
-func UpdateById(userObj *entity.User) error {
-	num, err := mydb.O.Update(userObj)
+func UpdateById(userObj *entity.User, cols ...string) error {
+	num, err := mydb.O.Update(userObj, cols...)
 	if err != nil {
 		return err
 	}
 	if num == 0 {
-		return errors.New("无更新影响条目")
+		mylog.Log.Info("无更新影响条目")
+		return nil
 	}
 	return nil
 }
@@ -286,7 +285,7 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	userObj.IsDelete = 1
-	num, err := mydb.O.Update(userObj)
+	num, err := mydb.O.Update(userObj, "isDelete")
 	if err != nil {
 		return err
 	}

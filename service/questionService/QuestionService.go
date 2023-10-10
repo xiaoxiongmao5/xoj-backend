@@ -2,13 +2,11 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:27:02
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-01 17:04:14
+ * @LastEditTime: 2023-10-10 15:13:18
  */
 package questionservice
 
 import (
-	"errors"
-
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
@@ -62,7 +60,7 @@ func ValidQuestion(ctx *context.Context, questionObj *entity.Question, add bool)
 
 // 获取查询条件（使用 beego 的 ORM 来构建数据库查询条件（用户根据哪些字段查询，根据前端传来的请求对象））
 func GetQuerySeter(qs orm.QuerySeter, queryRequest question.QuestionQueryRequest) orm.QuerySeter {
-	id := queryRequest.ID
+	id := queryRequest.Id
 	title := queryRequest.Title
 	content := queryRequest.Content
 	tags := queryRequest.Tags
@@ -149,7 +147,7 @@ func ListQuestionVO(ctx *context.Context, list []*entity.Question) (respdata []v
 
 	// 将查询到的用户信息存储到userMap中
 	for _, user := range users {
-		userMap[user.ID] = user
+		userMap[user.Id] = user
 	}
 
 	// 填充用户信息
@@ -188,13 +186,14 @@ func Save(questionObj *entity.Question) (int64, error) {
 	return num, nil
 }
 
-func UpdateById(questionObj *entity.Question) error {
-	num, err := mydb.O.Update(questionObj)
+func UpdateById(questionObj *entity.Question, cols ...string) error {
+	num, err := mydb.O.Update(questionObj, cols...)
 	if err != nil {
 		return err
 	}
 	if num == 0 {
-		return errors.New("无更新影响条目")
+		mylog.Log.Info("无更新影响条目")
+		return nil
 	}
 	return nil
 }
@@ -205,7 +204,7 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	questionObj.IsDelete = 1
-	num, err := mydb.O.Update(questionObj)
+	num, err := mydb.O.Update(questionObj, "isDelete")
 	if err != nil {
 		return err
 	}

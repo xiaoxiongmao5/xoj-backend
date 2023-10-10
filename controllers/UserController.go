@@ -148,12 +148,12 @@ func (this UserController) DeleteUser() {
 		return
 	}
 
-	if params.ID <= 0 {
+	if params.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
 
-	err := userservice.RemoveById(params.ID)
+	err := userservice.RemoveById(params.Id)
 	if err != nil {
 		mylog.Log.Error("删除用户失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "删除失败")
@@ -177,12 +177,12 @@ func (this UserController) UpdateUser() {
 		return
 	}
 
-	if params.ID <= 0 {
+	if params.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
 		return
 	}
 
-	userObj, err := userservice.GetById(params.ID)
+	userObj, err := userservice.GetById(params.Id)
 	if err != nil {
 		myresq.Abort(this.Ctx, myresq.USER_NOT_EXIST, "")
 		return
@@ -348,7 +348,12 @@ func (this UserController) UpdateMyUser() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	utils.CopyStructFields(params, loginUser)
 

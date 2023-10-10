@@ -2,27 +2,23 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 14:18:59
+ * @LastEditTime: 2023-10-10 19:48:07
  * @FilePath: /xoj-backend/main.go
  */
 package main
 
 import (
-	"net/http"
-
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/loadconfig"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/middleware"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myredis"
 
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/docs"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
-	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/routers"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/store"
 
 	beego "github.com/beego/beego/v2/server/web"
-	"github.com/beego/beego/v2/server/web/context"
-	"github.com/beego/beego/v2/server/web/filter/cors"
 )
 
 func init() {
@@ -43,7 +39,7 @@ func init() {
 //	@license.name	license.name
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host	localhost:8091
+//	@host	localhost:8091
 func main() {
 	defer mylog.Log.Writer().Close()
 	defer myredis.Close(myredis.RedisCli)
@@ -64,31 +60,16 @@ func main() {
 
 	// 全局异常捕获
 	beego.BConfig.RecoverPanic = true
-	beego.BConfig.RecoverFunc = func(ctx *context.Context, config *beego.Config) {
-		if err := recover(); err != nil {
-			mylog.Log.Errorf("beego.BConfig.RecoverFunc err= %v \n", err)
+	beego.BConfig.RecoverFunc = middleware.ExceptionHandingMiddleware
 
-			// 从 Context 中获取错误码和消息
-			response, ok := ctx.Input.GetData("json").(*myresq.BaseResponse)
-			if !ok {
-				response = myresq.NewBaseResponse(500, "未知错误", nil)
-			}
-
-			// 将 JSON 响应写入 Context，并设置响应头
-			ctx.Output.Header("Content-Type", "application/json; charset=utf-8")
-			ctx.Output.SetStatus(http.StatusOK)
-			ctx.Output.JSON(response, false, false)
-		}
-	}
-
-	// 处理跨域
-	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"http://localhost:8080", "https://*.jiexiong.com"}, //"*"
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	// // 处理跨域
+	// beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+	// 	AllowOrigins:     []string{"http://localhost:8080", "https://*.jiexiong.com"}, //"*"
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type"},
+	// 	ExposeHeaders:    []string{"Content-Length"},
+	// 	AllowCredentials: true,
+	// }))
 
 	// // 使用session
 	// // 设置是否开启 Session，默认是 false

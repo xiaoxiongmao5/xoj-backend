@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-09 13:27:22
+ * @LastEditTime: 2023-10-10 22:13:05
  */
 package controllers
 
@@ -61,7 +61,12 @@ func (this QuestionController) AddQuestion() {
 	// 参数校验
 	questionservice.ValidQuestion(this.Ctx, &questionObj, true)
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 	questionObj.UserId = loginUser.Id
 
 	id, err := questionservice.Save(&questionObj)
@@ -91,7 +96,12 @@ func (this QuestionController) DeleteQuestion() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 判断是否存在
 	questionInfo, err := questionservice.GetById(params.Id)
@@ -152,7 +162,12 @@ func (this QuestionController) EditQuestion() {
 	// 参数校验
 	questionservice.ValidQuestion(this.Ctx, questionObj, false)
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 仅本人或管理员可编辑
 	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.Id) && !userservice.IsAdmin(loginUser) {
@@ -238,7 +253,12 @@ func (this QuestionController) GetQuestionById() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 不是本人或管理员，不能直接获取所有信息
 	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.Id) && !userservice.IsAdmin(loginUser) {
@@ -399,7 +419,12 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
 	qs := mydb.O.QueryTable(new(entity.Question))
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 构建查询条件
 	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
@@ -443,11 +468,52 @@ func (this QuestionController) DoQuestionSubmit() {
 		return
 	}
 	// 登录才能提交
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	id := questionsubmitservice.DoQuestionSubmit(this.Ctx, params, loginUser)
 
 	myresq.Success(this.Ctx, id)
+}
+
+//	@Summary		获取提交题目的封装
+//	@Description	获取提交题目的封装（仅本人能看见自己提交的代码）
+//	@Tags			题目增删改查
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int									true	"id"
+//	@Success		200	{object}	swagtype.QuestionSubmitVOResponse	"响应数据"
+//	@Router			/question/question_submit/get/vo [get]
+func (this QuestionController) GetQuestionSubmitVOById() {
+	id, err := this.GetInt64("id")
+	if err != nil || id <= 0 {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
+
+	// 登录才能查看
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
+
+	questionSubmitObj, err := questionsubmitservice.GetById(id)
+	if err != nil {
+		mylog.Log.Error("根据 id 获取已提交题目信息失败, err=", err.Error())
+		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
+		return
+	}
+
+	// 脱敏
+	respdata := questionsubmitservice.GetQuestionSubmitVO(this.Ctx, questionSubmitObj, loginUser)
+
+	myresq.Success(this.Ctx, respdata)
 }
 
 //	@Summary		分页获取题目提交列表
@@ -483,7 +549,12 @@ func (this QuestionController) ListQuestionSubmitByPage() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	questionSubmitVOPage := questionsubmitservice.ListQuestionSubmitVOPage(this.Ctx, questionSubmitPage, loginUser)
 

@@ -2,9 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-01 17:33:14
- * @FilePath: /xoj-backend/controllers/question/question.go
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @LastEditTime: 2023-10-10 22:13:05
  */
 package controllers
 
@@ -63,8 +61,13 @@ func (this QuestionController) AddQuestion() {
 	// 参数校验
 	questionservice.ValidQuestion(this.Ctx, &questionObj, true)
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
-	questionObj.UserId = loginUser.ID
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
+	questionObj.UserId = loginUser.Id
 
 	id, err := questionservice.Save(&questionObj)
 	if err != nil {
@@ -93,21 +96,26 @@ func (this QuestionController) DeleteQuestion() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 判断是否存在
-	questionInfo, err := questionservice.GetById(params.ID)
-	if err != nil || questionInfo.ID <= 0 {
+	questionInfo, err := questionservice.GetById(params.Id)
+	if err != nil || questionInfo.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
 	// 仅本人或管理员可删除
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionInfo.UserId, loginUser.Id) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
 
-	if err = questionservice.RemoveById(params.ID); err != nil {
+	if err = questionservice.RemoveById(params.Id); err != nil {
 		mylog.Log.Error("删除题目失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "删除失败")
 	}
@@ -131,8 +139,8 @@ func (this QuestionController) EditQuestion() {
 	}
 
 	// 判断是否存在
-	questionObj, err := questionservice.GetById(params.ID)
-	if err != nil || questionObj.ID <= 0 {
+	questionObj, err := questionservice.GetById(params.Id)
+	if err != nil || questionObj.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
@@ -154,10 +162,15 @@ func (this QuestionController) EditQuestion() {
 	// 参数校验
 	questionservice.ValidQuestion(this.Ctx, questionObj, false)
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 仅本人或管理员可编辑
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.Id) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
@@ -187,8 +200,8 @@ func (this QuestionController) UpdateQuestion() {
 	}
 
 	// 判断是否存在
-	questionObj, err := questionservice.GetById(params.ID)
-	if err != nil || questionObj.ID <= 0 {
+	questionObj, err := questionservice.GetById(params.Id)
+	if err != nil || questionObj.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
@@ -235,15 +248,20 @@ func (this QuestionController) GetQuestionById() {
 		return
 	}
 	questionObj, err := questionservice.GetById(id)
-	if err != nil || questionObj.ID <= 0 {
+	if err != nil || questionObj.Id <= 0 {
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 不是本人或管理员，不能直接获取所有信息
-	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.ID) && !userservice.IsAdmin(loginUser) {
+	if !utils.CheckSame[int64]("检查当前用户与题目所属用户id是否一致", questionObj.UserId, loginUser.Id) && !userservice.IsAdmin(loginUser) {
 		myresq.Abort(this.Ctx, myresq.NO_AUTH_ERROR, "")
 		return
 	}
@@ -266,7 +284,7 @@ func (this QuestionController) GetQuestionVOById() {
 		return
 	}
 	questionObj, err := questionservice.GetById(id)
-	if err != nil || questionObj.ID <= 0 {
+	if err != nil || questionObj.Id <= 0 {
 		mylog.Log.Error("根据 id 获取题目包装类（脱敏）失败, err=", err.Error())
 		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
 		return
@@ -401,12 +419,17 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 	// 获取 QuerySeter 对象，直接使用 Model 结构体作为表名
 	qs := mydb.O.QueryTable(new(entity.Question))
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	// 构建查询条件
 	qs = commonservice.GetQuerySeterByPage(qs, params.Current, params.PageSize)
 	qs = questionservice.GetQuerySeter(qs, params)
-	qs = qs.Filter("userId", loginUser.ID)
+	qs = qs.Filter("userId", loginUser.Id)
 
 	// 执行查询
 	var questionPage []*entity.Question
@@ -417,7 +440,7 @@ func (this QuestionController) ListMyQuestionVOByPage() {
 		return
 	}
 
-	num, err := questionservice.GetQuerySeter(mydb.O.QueryTable(new(entity.Question)), params).Filter("userId", loginUser.ID).Count()
+	num, err := questionservice.GetQuerySeter(mydb.O.QueryTable(new(entity.Question)), params).Filter("userId", loginUser.Id).Count()
 	if err != nil {
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
@@ -445,11 +468,52 @@ func (this QuestionController) DoQuestionSubmit() {
 		return
 	}
 	// 登录才能提交
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	id := questionsubmitservice.DoQuestionSubmit(this.Ctx, params, loginUser)
 
 	myresq.Success(this.Ctx, id)
+}
+
+//	@Summary		获取提交题目的封装
+//	@Description	获取提交题目的封装（仅本人能看见自己提交的代码）
+//	@Tags			题目增删改查
+//	@Accept			application/x-www-form-urlencoded
+//	@Produce		application/json
+//	@Param			id	query		int									true	"id"
+//	@Success		200	{object}	swagtype.QuestionSubmitVOResponse	"响应数据"
+//	@Router			/question/question_submit/get/vo [get]
+func (this QuestionController) GetQuestionSubmitVOById() {
+	id, err := this.GetInt64("id")
+	if err != nil || id <= 0 {
+		myresq.Abort(this.Ctx, myresq.PARAMS_ERROR, "")
+		return
+	}
+
+	// 登录才能查看
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
+
+	questionSubmitObj, err := questionsubmitservice.GetById(id)
+	if err != nil {
+		mylog.Log.Error("根据 id 获取已提交题目信息失败, err=", err.Error())
+		myresq.Abort(this.Ctx, myresq.NOT_FOUND_ERROR, "题目未找到")
+		return
+	}
+
+	// 脱敏
+	respdata := questionsubmitservice.GetQuestionSubmitVO(this.Ctx, questionSubmitObj, loginUser)
+
+	myresq.Success(this.Ctx, respdata)
 }
 
 //	@Summary		分页获取题目提交列表
@@ -485,7 +549,12 @@ func (this QuestionController) ListQuestionSubmitByPage() {
 		return
 	}
 
-	loginUser := userservice.GetLoginUser(this.Ctx)
+	loginUserInterface := this.Ctx.Input.GetData("loginUser")
+	loginUser, ok := loginUserInterface.(*entity.User)
+	if !ok {
+		myresq.Abort(this.Ctx, myresq.GET_CONTEXT_ERROR, "")
+		return
+	}
 
 	questionSubmitVOPage := questionsubmitservice.ListQuestionSubmitVOPage(this.Ctx, questionSubmitPage, loginUser)
 
