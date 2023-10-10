@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 10:27:02
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-09 13:51:59
+ * @LastEditTime: 2023-10-10 15:13:18
  */
 package questionservice
 
@@ -186,8 +186,8 @@ func Save(questionObj *entity.Question) (int64, error) {
 	return num, nil
 }
 
-func UpdateById(questionObj *entity.Question) error {
-	num, err := mydb.O.Update(questionObj)
+func UpdateById(questionObj *entity.Question, cols ...string) error {
+	num, err := mydb.O.Update(questionObj, cols...)
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	questionObj.IsDelete = 1
-	num, err := mydb.O.Update(questionObj)
+	num, err := mydb.O.Update(questionObj, "isDelete")
 	if err != nil {
 		return err
 	}

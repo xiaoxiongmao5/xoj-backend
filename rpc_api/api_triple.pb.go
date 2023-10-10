@@ -28,7 +28,8 @@ const _ = grpc_go.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QuestionClient interface {
-	GetById(ctx context.Context, in *QuestionGetByIdReq, opts ...grpc_go.CallOption) (*QuestionGetByIdResp, common.ErrorWithAttachment)
+	GetById(ctx context.Context, in *QuestionGetByIdReq, opts ...grpc_go.CallOption) (*RpcQuestionObj, common.ErrorWithAttachment)
+	Add1AcceptedNum(ctx context.Context, in *RpcQuestionObj, opts ...grpc_go.CallOption) (*CommonUpdateByIdResp, common.ErrorWithAttachment)
 }
 
 type questionClient struct {
@@ -36,7 +37,8 @@ type questionClient struct {
 }
 
 type QuestionClientImpl struct {
-	GetById func(ctx context.Context, in *QuestionGetByIdReq) (*QuestionGetByIdResp, error)
+	GetById         func(ctx context.Context, in *QuestionGetByIdReq) (*RpcQuestionObj, error)
+	Add1AcceptedNum func(ctx context.Context, in *RpcQuestionObj) (*CommonUpdateByIdResp, error)
 }
 
 func (c *QuestionClientImpl) GetDubboStub(cc *triple.TripleConn) QuestionClient {
@@ -51,17 +53,24 @@ func NewQuestionClient(cc *triple.TripleConn) QuestionClient {
 	return &questionClient{cc}
 }
 
-func (c *questionClient) GetById(ctx context.Context, in *QuestionGetByIdReq, opts ...grpc_go.CallOption) (*QuestionGetByIdResp, common.ErrorWithAttachment) {
-	out := new(QuestionGetByIdResp)
+func (c *questionClient) GetById(ctx context.Context, in *QuestionGetByIdReq, opts ...grpc_go.CallOption) (*RpcQuestionObj, common.ErrorWithAttachment) {
+	out := new(RpcQuestionObj)
 	interfaceKey := ctx.Value(constant.InterfaceKey).(string)
 	return out, c.cc.Invoke(ctx, "/"+interfaceKey+"/GetById", in, out)
+}
+
+func (c *questionClient) Add1AcceptedNum(ctx context.Context, in *RpcQuestionObj, opts ...grpc_go.CallOption) (*CommonUpdateByIdResp, common.ErrorWithAttachment) {
+	out := new(CommonUpdateByIdResp)
+	interfaceKey := ctx.Value(constant.InterfaceKey).(string)
+	return out, c.cc.Invoke(ctx, "/"+interfaceKey+"/Add1AcceptedNum", in, out)
 }
 
 // QuestionServer is the server API for Question service.
 // All implementations must embed UnimplementedQuestionServer
 // for forward compatibility
 type QuestionServer interface {
-	GetById(context.Context, *QuestionGetByIdReq) (*QuestionGetByIdResp, error)
+	GetById(context.Context, *QuestionGetByIdReq) (*RpcQuestionObj, error)
+	Add1AcceptedNum(context.Context, *RpcQuestionObj) (*CommonUpdateByIdResp, error)
 	mustEmbedUnimplementedQuestionServer()
 }
 
@@ -70,8 +79,11 @@ type UnimplementedQuestionServer struct {
 	proxyImpl protocol.Invoker
 }
 
-func (UnimplementedQuestionServer) GetById(context.Context, *QuestionGetByIdReq) (*QuestionGetByIdResp, error) {
+func (UnimplementedQuestionServer) GetById(context.Context, *QuestionGetByIdReq) (*RpcQuestionObj, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
+}
+func (UnimplementedQuestionServer) Add1AcceptedNum(context.Context, *RpcQuestionObj) (*CommonUpdateByIdResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Add1AcceptedNum not implemented")
 }
 func (s *UnimplementedQuestionServer) XXX_SetProxyImpl(impl protocol.Invoker) {
 	s.proxyImpl = impl
@@ -130,6 +142,35 @@ func _Question_GetById_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Question_Add1AcceptedNum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc_go.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RpcQuestionObj)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	base := srv.(dubbo3.Dubbo3GrpcService)
+	args := []interface{}{}
+	args = append(args, in)
+	md, _ := metadata.FromIncomingContext(ctx)
+	invAttachment := make(map[string]interface{}, len(md))
+	for k, v := range md {
+		invAttachment[k] = v
+	}
+	invo := invocation.NewRPCInvocation("Add1AcceptedNum", args, invAttachment)
+	if interceptor == nil {
+		result := base.XXX_GetProxyImpl().Invoke(ctx, invo)
+		return result, result.Error()
+	}
+	info := &grpc_go.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ctx.Value("XXX_TRIPLE_GO_INTERFACE_NAME").(string),
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		result := base.XXX_GetProxyImpl().Invoke(ctx, invo)
+		return result, result.Error()
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Question_ServiceDesc is the grpc_go.ServiceDesc for Question service.
 // It's only intended for direct use with grpc_go.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -141,6 +182,10 @@ var Question_ServiceDesc = grpc_go.ServiceDesc{
 			MethodName: "GetById",
 			Handler:    _Question_GetById_Handler,
 		},
+		{
+			MethodName: "Add1AcceptedNum",
+			Handler:    _Question_Add1AcceptedNum_Handler,
+		},
 	},
 	Streams:  []grpc_go.StreamDesc{},
 	Metadata: "api.proto",
@@ -150,8 +195,8 @@ var Question_ServiceDesc = grpc_go.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QuestionSubmitClient interface {
-	GetById(ctx context.Context, in *QuestionSubmitGetByIdReq, opts ...grpc_go.CallOption) (*QuestionSubmitGetByIdResp, common.ErrorWithAttachment)
-	UpdateById(ctx context.Context, in *QuestionSubmitGetByIdResp, opts ...grpc_go.CallOption) (*QuestionSubmitUpdateByIdResp, common.ErrorWithAttachment)
+	GetById(ctx context.Context, in *QuestionSubmitGetByIdReq, opts ...grpc_go.CallOption) (*RpcQuestionSubmitObj, common.ErrorWithAttachment)
+	UpdateById(ctx context.Context, in *RpcQuestionSubmitObj, opts ...grpc_go.CallOption) (*CommonUpdateByIdResp, common.ErrorWithAttachment)
 }
 
 type questionSubmitClient struct {
@@ -159,8 +204,8 @@ type questionSubmitClient struct {
 }
 
 type QuestionSubmitClientImpl struct {
-	GetById    func(ctx context.Context, in *QuestionSubmitGetByIdReq) (*QuestionSubmitGetByIdResp, error)
-	UpdateById func(ctx context.Context, in *QuestionSubmitGetByIdResp) (*QuestionSubmitUpdateByIdResp, error)
+	GetById    func(ctx context.Context, in *QuestionSubmitGetByIdReq) (*RpcQuestionSubmitObj, error)
+	UpdateById func(ctx context.Context, in *RpcQuestionSubmitObj) (*CommonUpdateByIdResp, error)
 }
 
 func (c *QuestionSubmitClientImpl) GetDubboStub(cc *triple.TripleConn) QuestionSubmitClient {
@@ -175,14 +220,14 @@ func NewQuestionSubmitClient(cc *triple.TripleConn) QuestionSubmitClient {
 	return &questionSubmitClient{cc}
 }
 
-func (c *questionSubmitClient) GetById(ctx context.Context, in *QuestionSubmitGetByIdReq, opts ...grpc_go.CallOption) (*QuestionSubmitGetByIdResp, common.ErrorWithAttachment) {
-	out := new(QuestionSubmitGetByIdResp)
+func (c *questionSubmitClient) GetById(ctx context.Context, in *QuestionSubmitGetByIdReq, opts ...grpc_go.CallOption) (*RpcQuestionSubmitObj, common.ErrorWithAttachment) {
+	out := new(RpcQuestionSubmitObj)
 	interfaceKey := ctx.Value(constant.InterfaceKey).(string)
 	return out, c.cc.Invoke(ctx, "/"+interfaceKey+"/GetById", in, out)
 }
 
-func (c *questionSubmitClient) UpdateById(ctx context.Context, in *QuestionSubmitGetByIdResp, opts ...grpc_go.CallOption) (*QuestionSubmitUpdateByIdResp, common.ErrorWithAttachment) {
-	out := new(QuestionSubmitUpdateByIdResp)
+func (c *questionSubmitClient) UpdateById(ctx context.Context, in *RpcQuestionSubmitObj, opts ...grpc_go.CallOption) (*CommonUpdateByIdResp, common.ErrorWithAttachment) {
+	out := new(CommonUpdateByIdResp)
 	interfaceKey := ctx.Value(constant.InterfaceKey).(string)
 	return out, c.cc.Invoke(ctx, "/"+interfaceKey+"/UpdateById", in, out)
 }
@@ -191,8 +236,8 @@ func (c *questionSubmitClient) UpdateById(ctx context.Context, in *QuestionSubmi
 // All implementations must embed UnimplementedQuestionSubmitServer
 // for forward compatibility
 type QuestionSubmitServer interface {
-	GetById(context.Context, *QuestionSubmitGetByIdReq) (*QuestionSubmitGetByIdResp, error)
-	UpdateById(context.Context, *QuestionSubmitGetByIdResp) (*QuestionSubmitUpdateByIdResp, error)
+	GetById(context.Context, *QuestionSubmitGetByIdReq) (*RpcQuestionSubmitObj, error)
+	UpdateById(context.Context, *RpcQuestionSubmitObj) (*CommonUpdateByIdResp, error)
 	mustEmbedUnimplementedQuestionSubmitServer()
 }
 
@@ -201,10 +246,10 @@ type UnimplementedQuestionSubmitServer struct {
 	proxyImpl protocol.Invoker
 }
 
-func (UnimplementedQuestionSubmitServer) GetById(context.Context, *QuestionSubmitGetByIdReq) (*QuestionSubmitGetByIdResp, error) {
+func (UnimplementedQuestionSubmitServer) GetById(context.Context, *QuestionSubmitGetByIdReq) (*RpcQuestionSubmitObj, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
 }
-func (UnimplementedQuestionSubmitServer) UpdateById(context.Context, *QuestionSubmitGetByIdResp) (*QuestionSubmitUpdateByIdResp, error) {
+func (UnimplementedQuestionSubmitServer) UpdateById(context.Context, *RpcQuestionSubmitObj) (*CommonUpdateByIdResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateById not implemented")
 }
 func (s *UnimplementedQuestionSubmitServer) XXX_SetProxyImpl(impl protocol.Invoker) {
@@ -265,7 +310,7 @@ func _QuestionSubmit_GetById_Handler(srv interface{}, ctx context.Context, dec f
 }
 
 func _QuestionSubmit_UpdateById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc_go.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QuestionSubmitGetByIdResp)
+	in := new(RpcQuestionSubmitObj)
 	if err := dec(in); err != nil {
 		return nil, err
 	}

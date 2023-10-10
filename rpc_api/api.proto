@@ -8,12 +8,13 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;rpc_api";
 
 service Question {
-    rpc GetById(QuestionGetByIdReq) returns (QuestionGetByIdResp) {}
+    rpc GetById(QuestionGetByIdReq) returns (RpcQuestionObj) {}
+    rpc Add1AcceptedNum(RpcQuestionObj) returns (CommonUpdateByIdResp) {}
 }
 message QuestionGetByIdReq {
     int64 questionId = 1;
 }
-message QuestionGetByIdResp {
+message RpcQuestionObj {
     int64 id = 1;
     string title = 2;
     string content = 3;
@@ -32,14 +33,14 @@ message QuestionGetByIdResp {
 }
 
 service QuestionSubmit {
-    rpc GetById(QuestionSubmitGetByIdReq) returns (QuestionSubmitGetByIdResp) {}
-    rpc UpdateById(QuestionSubmitGetByIdResp) returns (QuestionSubmitUpdateByIdResp) {}
+    rpc GetById(QuestionSubmitGetByIdReq) returns (RpcQuestionSubmitObj) {}
+    rpc UpdateById(RpcQuestionSubmitObj) returns (CommonUpdateByIdResp) {}
 }
 
 message QuestionSubmitGetByIdReq {
     int64 questionSubmitId = 1;
 }
-message QuestionSubmitGetByIdResp {
+message RpcQuestionSubmitObj {
     int64 id = 1;
     string language = 2;
     string code = 3;
@@ -52,6 +53,6 @@ message QuestionSubmitGetByIdResp {
     int32 isDelete = 10;
 }
 
-message QuestionSubmitUpdateByIdResp {
+message CommonUpdateByIdResp {
     bool result = 1;
 }

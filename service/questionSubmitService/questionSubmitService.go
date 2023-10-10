@@ -2,11 +2,14 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 09:20:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-09 13:51:38
+ * @LastEditTime: 2023-10-10 16:42:13
  */
 package questionsubmitservice
 
 import (
+	Octx "context"
+	"errors"
+
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
@@ -16,7 +19,9 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/vo"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/myredis"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/producer"
 	questionservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/questionService"
 	userservice "github.com/xiaoxiongmao5/xoj/xoj-backend/service/userService"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
@@ -24,6 +29,11 @@ import (
 
 // 题目提交
 func DoQuestionSubmit(ctx *context.Context, params questionsubmit.QuestionSubmitAddRequest, userObj *entity.User) int64 {
+	if utils.IsAnyBlank(params.Code, params.Language, params.QuestionId) {
+		myresq.Abort(ctx, myresq.PARAMS_ERROR, "参数为空")
+		return -1
+	}
+
 	// 校验编程语言是否合法
 	// todo
 	if params.Language != "go" {
@@ -51,20 +61,48 @@ func DoQuestionSubmit(ctx *context.Context, params questionsubmit.QuestionSubmit
 	questionSubmitObj.Status = questionsubmitstatusenum.WAITING.GetValue()
 	questionSubmitObj.JudgeInfo = "{}"
 
-	id, err := Save(&questionSubmitObj)
+	// 获取 ORM 对象
+	o := orm.NewOrm()
+
+	var questionSubmitId int64
+
+	// 处理事务
+	err = o.DoTx(func(octx Octx.Context, txOrm orm.TxOrmer) error {
+		// 插入数据到数据库中
+		questionSubmitId, err = txOrm.Insert(&questionSubmitObj)
+		if err != nil {
+			mylog.Log.Info("插入题目到题目提交表: 失败,err=", err)
+			return err
+		}
+
+		// 修改题目表的:题目提交数 +1
+		questionObj.SubmitNum++
+		num, err := txOrm.Update(questionObj, "submitNum")
+		if err != nil {
+			mylog.Log.Info("更新题目提交数+1: 失败,err=", err)
+			return err
+		}
+		if num == 0 {
+			msg := "更新题目提交数+1: 无更新影响条目"
+			mylog.Log.Info(msg)
+			return errors.New(msg)
+		}
+
+		// 将提交题目Id放入消息队列, 执行判题服务
+		err = producer.PushQuestionSubmit2Queue(octx, myredis.RedisCli, questionSubmitId)
+		if err != nil {
+			mylog.Log.Info("将提交题目Id放入消息队列失败,err=", err)
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		myresq.Abort(ctx, myresq.OPERATION_ERROR, "数据插入失败")
-		return -1
+		myresq.Abort(ctx, myresq.OPERATION_ERROR, "题目提交失败")
 	}
 
-	// 执行判题服务
-	// todo 异步执行
-	// CompletableFuture.runAsync(() -> {
-	// 	judgeService.doJudge(id);
-	// });
-	// judge.JudgeServiceImpl{}.DoJudge(id)
-
-	return id
+	return questionSubmitId
 }
 
 // 获取查询条件
@@ -169,8 +207,8 @@ func Save(questionSubmitObj *entity.QuestionSubmit) (int64, error) {
 	return num, nil
 }
 
-func UpdateById(questionSubmitObj *entity.QuestionSubmit) error {
-	num, err := mydb.O.Update(questionSubmitObj)
+func UpdateById(questionSubmitObj *entity.QuestionSubmit, cols ...string) error {
+	num, err := mydb.O.Update(questionSubmitObj, cols...)
 	if err != nil {
 		return err
 	}
@@ -187,7 +225,7 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	questionSubmitObj.IsDelete = 1
-	num, err := mydb.O.Update(questionSubmitObj)
+	num, err := mydb.O.Update(questionSubmitObj, "isDelete")
 	if err != nil {
 		return err
 	}

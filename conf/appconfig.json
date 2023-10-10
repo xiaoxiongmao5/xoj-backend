@@ -1,6 +1,12 @@
 {
-    "database": {
-      "savePath": "root:@/xoj?charset=utf8&parseTime=true",
-      "maxOpenConns": 10
-    }
+  "database": {
+    "savePath": "root:@/xoj?charset=utf8&parseTime=true",
+    "maxOpenConns": 10
+  },
+  "redis": {
+    "addr": "localhost:6379",
+    "userName": "",
+    "passWord": "",
+    "db": 0
   }
+}

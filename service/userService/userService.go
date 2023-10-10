@@ -267,8 +267,8 @@ func Save(userObj *entity.User) (int64, error) {
 	return num, nil
 }
 
-func UpdateById(userObj *entity.User) error {
-	num, err := mydb.O.Update(userObj)
+func UpdateById(userObj *entity.User, cols ...string) error {
+	num, err := mydb.O.Update(userObj, cols...)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func RemoveById(id int64) error {
 		return nil
 	}
 	userObj.IsDelete = 1
-	num, err := mydb.O.Update(userObj)
+	num, err := mydb.O.Update(userObj, "isDelete")
 	if err != nil {
 		return err
 	}

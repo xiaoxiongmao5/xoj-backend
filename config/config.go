@@ -22,12 +22,14 @@ func init() {
 	var err error
 	// 加载App配置数据
 	if AppConfig, err = LoadAppConfig(); err != nil {
-		panic(err)
+		// panic(err)
+		mylog.Log.Error("LoadAppConfig err=", err)
 	}
 
 	// 加载APP动态配置数据
 	if AppConfigDynamic, err = LoadAppConfigDynamic(); err != nil {
-		panic(err)
+		// panic(err)
+		mylog.Log.Error("LoadAppConfigDynamic err=", err)
 	}
 
 	mylog.Log.Info("init end  : config")
@@ -45,6 +47,12 @@ type AppConfiguration struct {
 		SavePath     string `json:"savePath"`
 		MaxOpenConns int    `json:"maxOpenConns"`
 	} `json:"database"`
+	Redis struct {
+		Addr     string `json:"addr"`
+		UserName string `json:"userName"`
+		PassWord string `json:"passWord"`
+		DB       int    `json:"db"`
+	} `json:"redis"`
 	Server struct {
 		Port int `json:"port"`
 	} `json:"server"`
@@ -71,6 +79,12 @@ func LoadAppConfig() (*AppConfiguration, error) {
 	filePath := "conf/appconfig.json"
 	config := &AppConfiguration{}
 
+	// 判断配置文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		mylog.Log.Warn("App配置文件不存在")
+		return nil, err
+	}
+
 	// 打开项目配置文件
 	configFile, err := os.Open(filePath)
 	if err != nil {
@@ -91,6 +105,12 @@ func LoadAppConfig() (*AppConfiguration, error) {
 func LoadAppConfigDynamic() (*AppConfigurationDynamic, error) {
 	filePath := "conf/appdynamicconfig.json"
 	config := &AppConfigurationDynamic{}
+
+	// 判断配置文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		mylog.Log.Warn("App动态配置文件不存在")
+		return nil, err
+	}
 
 	// 打开项目配置文件
 	configFile, err := os.Open(filePath)

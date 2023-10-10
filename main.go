@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-08 23:45:31
+ * @LastEditTime: 2023-10-10 14:18:59
  * @FilePath: /xoj-backend/main.go
  */
 package main
@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/loadconfig"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/myredis"
 
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/docs"
@@ -42,9 +43,10 @@ func init() {
 //	@license.name	license.name
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host	localhost:8091
+// @host	localhost:8091
 func main() {
 	defer mylog.Log.Writer().Close()
+	defer myredis.Close(myredis.RedisCli)
 
 	// 启动配置文件加载协程
 	go config.LoadAppDynamicConfigCycle()

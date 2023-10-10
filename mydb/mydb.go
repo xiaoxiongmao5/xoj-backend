@@ -49,6 +49,13 @@ func init() {
 	mylog.Log.Info("init end  : mydb")
 }
 
+func Close(dbCli *sql.DB) error {
+	if dbCli != nil {
+		return dbCli.Close()
+	}
+	return nil
+}
+
 // 创建数据库连接池
 // 使用：
 // // 初始化数据库连接池
@@ -56,8 +63,6 @@ func init() {
 //	if mydb.DB, err = mydb.ConnectionPool(config.AppConfig.Database.SavePath, config.AppConfig.Database.MaxOpenConns); err != nil {
 //		panic(err)
 //	}
-//
-// defer mydb.DB.Close()
 func ConnectionPool(savePath string, maxOpenConns int) (*sql.DB, error) {
 	db, err := sql.Open("mysql", savePath)
 	if err != nil {
