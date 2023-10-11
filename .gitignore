@@ -3,3 +3,4 @@ api*.rest
 doc/*
 swagger/*
 dbsq/*
+sqlc.yaml
