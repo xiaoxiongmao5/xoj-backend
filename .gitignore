@@ -1,4 +1,5 @@
 log/*
+api_rest/*
 api*.rest
 doc/*
 swagger/*

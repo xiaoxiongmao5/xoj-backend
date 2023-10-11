@@ -2,9 +2,9 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-10-08 19:31:19
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-09 10:34:14
+ * @LastEditTime: 2023-10-11 16:52:36
  */
-package loadconfig
+package myrpc
 
 import (
 	"flag"
@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	mylog.Log.Info("init begin: loadrpc")
+	mylog.Log.Info("init begin: myrpc")
 
 	config.SetProviderService(&rpcapiservice.QuestionServerImpl{})
 	config.SetProviderService(&rpcapiservice.QuestionSubmitServerImpl{})
@@ -26,7 +26,7 @@ func init() {
 	// 加载 Dubbo-go 的配置
 	LoadDubboConfig()
 
-	mylog.Log.Info("init end  : loadrpc")
+	mylog.Log.Info("init end  : myrpc")
 }
 
 // 设置环境变量

@@ -1,0 +1,10 @@
+doc/
+log/
+sqlc.yaml
+api.rest
+swagger/
+dbsq/
+xoj-backend
+README.md
+tests
+api_rest
