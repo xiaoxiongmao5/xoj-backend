@@ -1,6 +1,8 @@
 package userservice
 
 import (
+	"fmt"
+
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web/context"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
@@ -11,6 +13,7 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mylog"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myresq"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/mysession"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/utils"
 )
 
@@ -99,9 +102,18 @@ func UserLogin(ctx *context.Context, userAccount, userPassword string) (loginUse
 	}
 
 	// 记录用户的登录态
-	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	// SessionStart 根据当前请求返回 session 对象
+	sess, err := mysession.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	fmt.Println("sess", sess)
+	if err != nil {
+		mysession.GlobalSessions.SessionDestroy(ctx.ResponseWriter, ctx.Request)
+		sess, _ = mysession.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+		fmt.Println("重新生成的sess", sess)
+	}
 	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
 	sess.Set(ctx.Request.Context(), "USER_LOGIN_STATE", userObj)
+
+	fmt.Println("到这里了", sess)
 
 	return GetLoginUserVO(&userObj)
 }
@@ -115,7 +127,12 @@ func UserLoginByMpOpen(wxOAuth2UserInfo interface{}) {
 func GetLoginUser(ctx *context.Context) *entity.User {
 	// 先判断是否已登录
 	// SessionStart 根据当前请求返回 session 对象
-	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	sess, err := mysession.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	if err != nil {
+		mysession.GlobalSessions.SessionDestroy(ctx.ResponseWriter, ctx.Request)
+		sess, _ = mysession.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+		fmt.Println("重新生成的sess", sess)
+	}
 	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
 	userObj := sess.Get(ctx.Request.Context(), "USER_LOGIN_STATE")
 	if userObj == nil {
@@ -146,7 +163,8 @@ func IsAdmin(user *entity.User) bool {
 
 // 用户注销
 func UserLogout(ctx *context.Context) bool {
-	sess, _ := mydb.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
+	// SessionStart 根据当前请求返回 session 对象
+	sess, _ := mysession.GlobalSessions.SessionStart(ctx.ResponseWriter, ctx.Request)
 	defer sess.SessionRelease(ctx.Request.Context(), ctx.ResponseWriter)
 	userObj := sess.Get(ctx.Request.Context(), "USER_LOGIN_STATE")
 	if userObj == nil {

@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 19:48:07
+ * @LastEditTime: 2023-10-11 15:24:13
  * @FilePath: /xoj-backend/main.go
  */
 package main
@@ -11,6 +11,7 @@ import (
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/loadconfig"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/middleware"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/myredis"
+	"github.com/xiaoxiongmao5/xoj/xoj-backend/mysession"
 
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/config"
 	_ "github.com/xiaoxiongmao5/xoj/xoj-backend/docs"
@@ -46,6 +47,12 @@ func main() {
 
 	// 启动配置文件加载协程
 	go config.LoadAppDynamicConfigCycle()
+
+	if mysession.GlobalSessions != nil {
+		go mysession.GlobalSessions.GC()
+	} else {
+		panic("GlobalSessions is nil, cannot start GC")
+	}
 
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
