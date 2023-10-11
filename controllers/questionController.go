@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:18:34
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 22:13:05
+ * @LastEditTime: 2023-10-11 10:50:40
  */
 package controllers
 
@@ -537,12 +537,14 @@ func (this QuestionController) ListQuestionSubmitByPage() {
 
 	var questionSubmitPage []*entity.QuestionSubmit
 
+	// 查询所有分页条目
 	if _, err := qs.All(&questionSubmitPage); err != nil {
 		mylog.Log.Errorf("ListQuestionSubmitByPage qs.All error: %v", err.Error())
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")
 		return
 	}
 
+	// 查询总条目数
 	num, err := questionsubmitservice.GetQuerySeter(mydb.O.QueryTable(new(entity.QuestionSubmit)), params).Count()
 	if err != nil {
 		myresq.Abort(this.Ctx, myresq.OPERATION_ERROR, "查询失败")

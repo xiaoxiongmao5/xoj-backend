@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 09:20:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 16:42:13
+ * @LastEditTime: 2023-10-11 11:06:46
  */
 package questionsubmitservice
 
@@ -150,10 +150,18 @@ func GetQuestionSubmitVO(ctx *context.Context, questionSubmitObj *entity.Questio
 		questionSubmitVO.Code = ""
 	}
 
-	questionSubmitVO.UserVO = userservice.GetUserVO(loginUser)
+	// 查询该提交题目的提交者用户信息
+	if questionSubmitUser, err := userservice.GetById(questionSubmitObj.UserId); err != nil {
+		// 没查到该用户，或者该用户已被删除，就将其id作为该用户的账户名
+		mylog.Log.Errorf("查询已提交题目的提交者信息失败,userId=[%d], err=%v", questionSubmitObj.UserId, err.Error())
+		questionSubmitVO.UserVO = vo.UserVO{}
+	} else {
+		questionSubmitVO.UserVO = userservice.GetUserVO(questionSubmitUser)
+	}
 
+	// 查询该提交题目的题目信息
 	if questionObj, err := questionservice.GetById(questionSubmitVO.QuestionId); err != nil {
-		mylog.Log.Errorf("查询questionId=[%d]的题目信息失败, err=%v", questionSubmitVO.QuestionId, err.Error())
+		mylog.Log.Errorf("查询已提交题目的题目信息失败,questionId=[%d], err=%v", questionSubmitVO.QuestionId, err.Error())
 		questionSubmitVO.QuestionVO = vo.QuestionVO{}
 	} else {
 		questionSubmitVO.QuestionVO = questionservice.GetQuestionVO(ctx, questionObj)
