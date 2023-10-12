@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-10-09 14:37:35
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 20:14:57
+ * @LastEditTime: 2023-10-12 14:19:46
  */
 package myresq
 
@@ -23,17 +23,19 @@ const (
 	// 定义枚举值
 	SUCCESS RespCode = iota
 	PARAMS_ERROR
-	NOT_LOGIN_ERROR
-	NO_AUTH_ERROR
-	NOT_FOUND_ERROR
-	FORBIDDEN_ERROR
-	SYSTEM_ERROR
 	OPERATION_ERROR
-	GET_CONTEXT_ERROR
 	TOO_MANY_REQUEST_ERROR
 	API_REQUEST_ERROR
 	GENERATE_RANDOMKEY_FAILED
 	GENERATE_TOKEN_FAILED
+)
+const (
+	NOT_LOGIN_ERROR   RespCode = 401
+	NO_AUTH_ERROR     RespCode = 402
+	FORBIDDEN_ERROR   RespCode = 403
+	NOT_FOUND_ERROR   RespCode = 404
+	GET_CONTEXT_ERROR RespCode = 204
+	SYSTEM_ERROR      RespCode = 500
 )
 const (
 	USER_NOT_EXIST RespCode = iota + 3000
@@ -49,8 +51,8 @@ var respCodeMessages = map[RespCode]string{
 	PARAMS_ERROR:           "请求参数错误",
 	NOT_LOGIN_ERROR:        "未登录",
 	NO_AUTH_ERROR:          "无权限",
-	NOT_FOUND_ERROR:        "请求数据不存在",
 	FORBIDDEN_ERROR:        "禁止访问",
+	NOT_FOUND_ERROR:        "请求数据不存在",
 	SYSTEM_ERROR:           "系统内部异常",
 	OPERATION_ERROR:        "操作失败",
 	GET_CONTEXT_ERROR:      "获取上下文信息失败",
