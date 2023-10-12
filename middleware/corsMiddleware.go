@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-10-10 17:11:45
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 19:40:26
+ * @LastEditTime: 2023-10-12 14:05:16
  * @FilePath: /xoj-backend/middleware/authMiddleware.go
  * @Description: 处理跨域请求的中间件
  */
@@ -17,7 +17,7 @@ import (
 
 func CORSMiddleware() web.HandleFunc {
 	corsMiddleware := cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"http://localhost:8080", "https://*.jiexiong.com"}, //"*"
+		AllowOrigins:     []string{"*"}, //"*"
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
