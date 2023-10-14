@@ -6,10 +6,14 @@
 
 ## 项目本地启动
 
-```bash
-go mod tidy
-go run main.go
-```
+1. 修改/conf 下的配置
+    * appconfig.json：修改 `database` 和 `redis` 的连接地址
+    * dubbogo.yaml：修改 `nacos` 的连接地址
+2. 启动项目
+    ```cmd
+    go mod tidy
+    go run main.go
+    ```
 
 ## 运行项目中的单元测试
 
