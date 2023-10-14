@@ -31,10 +31,10 @@ go clean -testcache //清除测试缓存
 * 配置文件位置：/conf/dubbogo.yaml
 
 * 具体业务为为：
-     * `获得题目信息[Question.GetById]`
-     * `更新题目通过数+1[Question.Add1AcceptedNum]`
-     * `获取提交题目信息[QuestionSubmit.GetById]`、
-     * `更新提交题目信息[QuestionSubmit.UpdateById]` 
+     * 获得题目信息 `Question.GetById`
+     * 更新题目通过数+1 `Question.Add1AcceptedNum`
+     * 获取提交题目信息 `QuestionSubmit.GetById`
+     * 更新提交题目信息 `QuestionSubmit.UpdateById`
 
 ### 相关命令
 
