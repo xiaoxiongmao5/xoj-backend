@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-26 22:44:05
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 10:36:22
+ * @LastEditTime: 2023-10-15 22:47:34
  * @FilePath: /xoj-backend/model/dto/question/questionAddRequest.go
  * @Description: 业务层面的封装
  */
@@ -19,6 +19,8 @@ type QuestionUpdateRequest struct {
 	Tags []string `json:"tags"`
 	// 题目答案
 	Answer string `json:"answer"`
+	// 题目答案模版
+	AnswerTemplate string `json:"answerTemplate"`
 	// 判题用例
 	JudgeCase []JudgeCase `json:"judgeCase"`
 	// 判题配置

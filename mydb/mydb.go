@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-10-11 14:25:30
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-11 15:23:06
+ * @LastEditTime: 2023-10-15 22:38:49
  * @FilePath: /xoj-backend/mydb/mydb.go
  * @Description: mydb
  */
@@ -39,6 +39,12 @@ func init() {
 
 	// 创建一个 Orm 实例对象，用于执行数据库操作。 NewOrm 的同时会执行 orm.BootStrap (整个 app 只执行一次)，用以验证模型之间的定义并缓存。（大多数情况下，应该尽量复用Orm 实例，因为本身Orm实例被设计为无状态的，一个数据库对应一个Orm实例）（ps: 但是在使用事务的时候，我们会返回TxOrm的实例，它本身是有状态的，一个事务对应一个TxOrm实例。在使用TxOrm时候，任何衍生查询都是在该事务内。）
 	O = orm.NewOrm()
+
+	// 执行数据库表结构同步操作。告诉 ORM 在默认数据库连接上执行同步操作，第二个参数 false 表示不强制删除已存在的表，第三个参数 true 表示打印同步操作的日志。这通常在应用程序启动时执行，以确保数据库表结构与 ORM 模型定义一致。
+	err := orm.RunSyncdb("default", false, true)
+	if err != nil {
+		mylog.Log.Error("数据库表结构同步操作失败[orm.RunSyncdb] err=", err.Error())
+	}
 
 	mylog.Log.Info("init end  : mydb")
 }

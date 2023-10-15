@@ -2,7 +2,7 @@
 * @Author: 小熊 627516430@qq.com
 * @Date: 2023-09-27 10:33:52
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 12:00:59
+ * @LastEditTime: 2023-10-15 22:36:32
 * @FilePath: /xoj-backend/model/vo/QuestionVO.go
 * @Description: 专门返回给前端用的，可以节约网络传输大小，或者过滤字段（脱敏）、保证安全性。
 */
@@ -27,6 +27,10 @@ type QuestionVO struct {
 	Content string `json:"content"`
 	// 标签列表（json 数组）
 	Tags []string `json:"tags"`
+	// 题目答案
+	Answer string `json:"answer"`
+	// 题目答案模版
+	AnswerTemplate string `json:"answerTemplate"`
 	// 题目提交数
 	SubmitNum int32 `json:"submitNum"`
 	// 题目通过数
