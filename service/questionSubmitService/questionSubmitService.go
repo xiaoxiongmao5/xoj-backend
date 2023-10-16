@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-29 09:20:16
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-11 11:06:46
+ * @LastEditTime: 2023-10-16 11:11:17
  */
 package questionsubmitservice
 
@@ -15,6 +15,7 @@ import (
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/constant"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/dto/questionsubmit"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/entity"
+	questionsubmitlanguageenum "github.com/xiaoxiongmao5/xoj/xoj-backend/model/enums/QuestionSubmitLanguageEnum"
 	questionsubmitstatusenum "github.com/xiaoxiongmao5/xoj/xoj-backend/model/enums/QuestionSubmitStatusEnum"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/model/vo"
 	"github.com/xiaoxiongmao5/xoj/xoj-backend/mydb"
@@ -36,8 +37,8 @@ func DoQuestionSubmit(ctx *context.Context, params questionsubmit.QuestionSubmit
 
 	// 校验编程语言是否合法
 	// todo
-	if params.Language != "go" {
-		myresq.Abort(ctx, myresq.PARAMS_ERROR, "编程语言错误")
+	if !utils.CheckSame[string]("判题前检查编程语言是否为go", params.Language, questionsubmitlanguageenum.GOLANG.GetValue()) {
+		myresq.Abort(ctx, myresq.UNSUPPORTED_ERROR, "暂不支持该编程语言")
 		return -1
 	}
 

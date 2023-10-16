@@ -2,13 +2,14 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-27 14:46:54
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-09-30 12:20:01
+ * @LastEditTime: 2023-10-16 13:15:33
  * @FilePath: /xoj-backend/utils/conv.go
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strconv"
@@ -106,4 +107,13 @@ func CopyStructFields(src, dst interface{}) bool {
 	}
 
 	return true
+}
+
+func JsonMarshal(data interface{}, defaultStr string) (string, error) {
+	jsonStr, err := json.Marshal(data)
+	if err != nil {
+		mylog.Log.Error("json.Marshal failed, err=", err)
+		return defaultStr, err
+	}
+	return string(jsonStr), nil
 }

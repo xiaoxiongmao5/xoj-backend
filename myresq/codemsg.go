@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-10-09 14:37:35
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-12 14:19:46
+ * @LastEditTime: 2023-10-16 11:07:50
  */
 package myresq
 
@@ -28,6 +28,7 @@ const (
 	API_REQUEST_ERROR
 	GENERATE_RANDOMKEY_FAILED
 	GENERATE_TOKEN_FAILED
+	UNSUPPORTED_ERROR
 )
 const (
 	NOT_LOGIN_ERROR   RespCode = 401
@@ -45,7 +46,6 @@ const (
 )
 
 // 错误消息映射
-
 var respCodeMessages = map[RespCode]string{
 	SUCCESS:                "success",
 	PARAMS_ERROR:           "请求参数错误",
@@ -62,4 +62,5 @@ var respCodeMessages = map[RespCode]string{
 	USER_EXIST:             "用户已存在",
 	CREATE_USER_FAILED:     "账号创建失败",
 	USER_PASSWORD_ERROR:    "账号密码错误",
+	UNSUPPORTED_ERROR:      "不支持",
 }
