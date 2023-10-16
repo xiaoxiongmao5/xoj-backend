@@ -2,7 +2,7 @@
  * @Author: 小熊 627516430@qq.com
  * @Date: 2023-09-30 11:37:36
  * @LastEditors: 小熊 627516430@qq.com
- * @LastEditTime: 2023-10-10 17:02:04
+ * @LastEditTime: 2023-10-16 20:33:58
  */
 package swagtype
 
@@ -35,8 +35,8 @@ type ListUserResponse struct {
 	Data    listUser `json:"data"`
 }
 type listUser struct {
-	Data  []entity.User `json:"data"`
-	Total int64         `json:"total"`
+	Records []entity.User `json:"records"`
+	Total   int64         `json:"total"`
 }
 
 type ListUserVOResponse struct {
@@ -45,6 +45,6 @@ type ListUserVOResponse struct {
 	Data    listUserVO `json:"data"`
 }
 type listUserVO struct {
-	Data  []vo.UserVO `json:"data"`
-	Total int64       `json:"total"`
+	Records []vo.UserVO `json:"records"`
+	Total   int64       `json:"total"`
 }
