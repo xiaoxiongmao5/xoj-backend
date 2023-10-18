@@ -158,7 +158,7 @@ func LoadAppDynamicConfigCycle() {
 			if !reflect.DeepEqual(lastConfig, newConfig) {
 				lastConfig = newConfig
 				// 在这里使用最新的配置数据进行处理
-				mylog.Log.Errorf("Loaded new config: %+v", newConfig)
+				mylog.Log.Infof("Loaded new config: %+v", newConfig)
 				AppConfigDynamic = newConfig
 			}
 			appConfigMutex.Unlock()
